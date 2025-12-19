@@ -235,6 +235,33 @@
       justify-content: center;
     }
 
+    /* Genre Filter Buttons */
+    .genre-btn {
+      padding: 8px 16px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1.5px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .genre-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      background: var(--accent-color-10);
+    }
+
+    .genre-btn.active {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: var(--accent-color);
+      font-weight: 600;
+    }
+
     /* Hero Banner */
     .hero {
       background: var(--accent-gradient);
@@ -434,10 +461,12 @@
       width: 100%;
       padding: 12px;
       background: var(--bg-card);
-      border: 1px solid var(--border-color);
+      border: 1.5px solid var(--border-color);
       border-radius: 10px;
       color: var(--text-primary);
       font-size: 15px;
+      transition: all 0.3s ease;
+      font-family: inherit;
     }
 
     .form-group input:focus,
@@ -445,6 +474,7 @@
     .form-group textarea:focus {
       outline: none;
       border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-color-10);
     }
 
     /* Toast */
@@ -1172,6 +1202,7 @@
 
         <!-- Admin Login (quick) -->
         <div id="adminLogin" style="padding:10px; margin-top:12px;">
+          <input type="text" id="adminUsername" placeholder="Username (único)" style="width:100%; margin-bottom:6px; padding:6px; border-radius:6px; border:1px solid var(--border-color);">
           <input type="email" id="adminEmail" placeholder="Email admin" style="width:100%; margin-bottom:6px; padding:6px; border-radius:6px; border:1px solid var(--border-color);">
           <input type="password" id="adminPassword" placeholder="Senha" style="width:100%; margin-bottom:6px; padding:6px; border-radius:6px; border:1px solid var(--border-color);">
           <div style="display:flex; gap:8px;">
@@ -1199,6 +1230,10 @@
             <i class="fas fa-history"></i>
             <span>Recentes</span>
           </div>
+          <div class="nav-item" data-section="allMangas">
+            <i class="fas fa-globe"></i>
+            <span>Todos os Mangás</span>
+          </div>
           <div class="nav-item" data-section="settings">
             <i class="fas fa-cog"></i>
             <span>Configurações</span>
@@ -1214,7 +1249,7 @@
             <i class="fas fa-search"></i>
             <input type="text" id="searchInput" placeholder="Buscar mangás...">
           </div>
-          <button class="btn btn-primary" id="addMangaBtn">
+          <button class="btn btn-primary admin-only" id="addMangaBtn">
             <i class="fas fa-plus"></i> Adicionar
           </button>
           <button class="btn btn-secondary btn-icon" id="themeToggle">
@@ -1302,6 +1337,18 @@
           <div class="manga-grid" id="recentReadGrid"></div>
         </div>
 
+        <!-- All Mangas Section -->
+        <div class="content-section" id="allMangas">
+          <h3 class="section-title">
+            <i class="fas fa-globe"></i> Todos os Mangás
+          </h3>
+          <div style="margin-bottom:20px;">
+            <input type="text" id="allMangasSearch" placeholder="Buscar nesta seção..." style="width:100%;max-width:400px;padding:10px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-card);color:var(--text-primary);">
+            <div id="genreFilterButtons" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+          </div>
+          <div class="manga-grid" id="allMangasGrid"></div>
+        </div>
+
         <!-- Manga Detail Section -->
         <div class="content-section" id="mangaDetail">
           <button class="btn btn-secondary" id="backBtn">
@@ -1337,7 +1384,7 @@
                 <button class="btn btn-secondary" id="favoriteBtn">
                   <i class="far fa-star"></i> Favoritar
                 </button>
-                <button class="btn btn-secondary" id="addChapterBtn">
+                <button class="btn btn-secondary admin-only" id="addChapterBtn">
                   <i class="fas fa-plus"></i> Adicionar Capítulo
                 </button>
               </div>
@@ -1451,6 +1498,16 @@
               </div>
               <button class="btn btn-secondary" id="changePasswordBtn">
                 <i class="fas fa-key"></i> Alterar
+              </button>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <strong>Logout</strong>
+                <p style="font-size: 14px; color: var(--text-muted);">Sair da conta atual</p>
+              </div>
+              <button class="btn btn-danger" onclick="logoutAdmin()">
+                <i class="fas fa-sign-out-alt"></i> Logout
               </button>
             </div>
 
@@ -1678,6 +1735,24 @@ https://exemplo.com/pagina2.jpg"></textarea>
         <div class="form-group">
           <label>URL da Capa</label>
           <input type="text" id="mangaCover" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label>Gênero</label>
+          <select id="mangaGenre">
+            <option value="">Selecione um gênero</option>
+            <option value="Ação">Ação</option>
+            <option value="Aventura">Aventura</option>
+            <option value="Comédia">Comédia</option>
+            <option value="Drama">Drama</option>
+            <option value="Fantasia">Fantasia</option>
+            <option value="Ficção Científica">Ficção Científica</option>
+            <option value="Horror">Horror</option>
+            <option value="Mistério">Mistério</option>
+            <option value="Romance">Romance</option>
+            <option value="Slice of Life">Slice of Life</option>
+            <option value="Supernatural">Supernatural</option>
+            <option value="Thriller">Thriller</option>
+          </select>
         </div>
         <button class="btn btn-primary" id="saveMangaBtn" style="width: 100%;">
           <i class="fas fa-save"></i> Salvar Mangá
@@ -2743,6 +2818,7 @@ https://exemplo.com/pagina2.jpg"></textarea>
         if (section === 'library') this.loadLibrary();
         if (section === 'favorites') this.loadFavorites();
         if (section === 'recent') this.loadRecent();
+        if (section === 'allMangas') this.loadAllMangas();
         if (section === 'settings') this.loadSettings();
       }
 
@@ -2795,6 +2871,50 @@ https://exemplo.com/pagina2.jpg"></textarea>
         
         const recentMangas = this.mangas.filter(m => recentMangaIds.includes(m.id));
         this.renderMangaGrid('recentReadGrid', recentMangas.slice(0, 8));
+      }
+
+      async loadAllMangas() {
+        // gêneros disponíveis
+        const genres = ['Ação', 'Aventura', 'Comédia', 'Drama', 'Fantasia', 'Ficção Científica', 'Horror', 'Mistério', 'Romance', 'Slice of Life', 'Supernatural', 'Thriller'];
+        this.currentGenreFilter = 'all';
+        
+        // renderizar botões de gênero
+        const filterBtns = document.getElementById('genreFilterButtons');
+        filterBtns.innerHTML = '<button class="btn genre-btn active" onclick="app.filterByGenre(\'all\')">Todos</button>' + 
+          genres.map(g => `<button class="btn genre-btn" onclick="app.filterByGenre('${g}')">${g}</button>`).join('');
+        
+        // renderizar busca
+        const search = document.getElementById('allMangasSearch');
+        search.addEventListener('input', () => this.renderAllMangasFiltered());
+        
+        this.renderAllMangasFiltered();
+      }
+
+      filterByGenre(genre) {
+        this.currentGenreFilter = genre;
+        this.renderAllMangasFiltered();
+        // highlight button
+        document.querySelectorAll('#genreFilterButtons .genre-btn').forEach(btn => {
+          const isActive = btn.textContent === (genre === 'all' ? 'Todos' : genre);
+          btn.classList.toggle('active', isActive);
+        });
+      }
+
+      renderAllMangasFiltered() {
+        const search = (document.getElementById('allMangasSearch').value || '').toLowerCase();
+        let filtered = this.mangas;
+        
+        // filtro por gênero
+        if (this.currentGenreFilter !== 'all') {
+          filtered = filtered.filter(m => m.genre && m.genre.includes(this.currentGenreFilter));
+        }
+        
+        // filtro por busca
+        if (search) {
+          filtered = filtered.filter(m => m.title.toLowerCase().includes(search) || (m.author && m.author.toLowerCase().includes(search)));
+        }
+        
+        this.renderMangaGrid('allMangasGrid', filtered);
       }
 
       async loadSettings() {
@@ -2937,6 +3057,7 @@ https://exemplo.com/pagina2.jpg"></textarea>
           author: document.getElementById('mangaAuthor').value || 'Desconhecido',
           description: document.getElementById('mangaDescription').value || '',
           year: parseInt(document.getElementById('mangaYear').value) || 2024,
+          genre: document.getElementById('mangaGenre').value || 'Sem gênero',
           rating: 4.5,
           cover: document.getElementById('mangaCover').value || `https://placehold.co/400x600/667eea/ffffff?text=${encodeURIComponent(title)}`,
           chapters: []
@@ -2950,6 +3071,14 @@ https://exemplo.com/pagina2.jpg"></textarea>
         stats.mangasAdded = (stats.mangasAdded || 0) + 1;
         stats.userId = this.currentUser.id;
         await this.db.saveStats(stats);
+
+        // Limpar formulário
+        document.getElementById('mangaTitle').value = '';
+        document.getElementById('mangaAuthor').value = '';
+        document.getElementById('mangaDescription').value = '';
+        document.getElementById('mangaYear').value = '2024';
+        document.getElementById('mangaCover').value = '';
+        document.getElementById('mangaGenre').value = '';
 
         document.getElementById('addMangaModal').classList.remove('active');
         this.showToast('Mangá adicionado com sucesso!', 'success');
@@ -3093,8 +3222,8 @@ https://exemplo.com/pagina2.jpg"></textarea>
                   <div class="comment-avatar">${comment.username.charAt(0).toUpperCase()}</div>
                   <div class="comment-meta">
                     <div class="comment-name">
-                      ${comment.username}
-                      ${comment.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
+                      <a href="javascript:void(0)" class="comment-username" onclick="app.openProfile('${comment.userId}')">${comment.username}</a>
+                      ${comment.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i></span>' : ''}
                     </div>
                     <div class="comment-date">${timeAgo}</div>
                   </div>
@@ -3106,7 +3235,7 @@ https://exemplo.com/pagina2.jpg"></textarea>
                   <i class="far fa-heart"></i>
                   <span>${comment.likes}</span>
                 </button>
-                ${this.isAdmin ? `
+                ${ (this.isAdmin || window.isAdmin) ? `
                   <button class="comment-action" onclick="app.deleteComment('${comment.id}')">
                     <i class="fas fa-trash"></i>
                     Deletar
@@ -3116,6 +3245,118 @@ https://exemplo.com/pagina2.jpg"></textarea>
             </div>
           `;
         }).join('');
+      }
+
+      // Abrir modal de perfil do usuário
+      async openProfile(userId) {
+        const modal = document.getElementById('profileModal');
+        const content = document.getElementById('profileContent');
+        if (!modal || !content) return;
+        content.innerHTML = '<p>Carregando...</p>';
+
+        try {
+          let username = 'Usuário';
+          let isAdmin = false;
+          let commentCount = 0;
+          let createdAt = null;
+          if (firebaseDB) {
+            const snapUser = await firebaseDB.ref('users/' + userId).get();
+            if (snapUser.exists()) {
+              const u = snapUser.val();
+              if (u.username) username = u.username;
+              if (u.createdAt) createdAt = u.createdAt;
+            }
+            const snapAdmin = await firebaseDB.ref('admins/' + userId).get();
+            isAdmin = snapAdmin.exists() && snapAdmin.val() === true;
+            // count comments
+            const commentsSnap = await firebaseDB.ref('comments').orderByChild('userId').equalTo(userId).get();
+            if (commentsSnap.exists()) commentCount = Object.keys(commentsSnap.val()).length;
+          } else {
+            const user = await this.db.getUser(userId);
+            if (user && user.username) username = user.username;
+          }
+
+          content.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-primary);display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;">${username.charAt(0).toUpperCase()}</div>
+              <div>
+                <div style="font-weight:700;font-size:18px;">${username} ${isAdmin ? '<span style="color:#f3c623;margin-left:8px;"><i class="fas fa-crown"></i></span>' : ''}</div>
+                <div style="font-size:13px;color:var(--text-muted);">${isAdmin ? 'Administrador' : 'Leitor'}</div>
+              </div>
+            </div>
+            <div style="margin-top:12px;font-size:14px;color:var(--text-secondary);">
+              <p>UID: <small style="color:var(--text-muted)">${userId}</small></p>
+              <p>Comentários: <strong>${commentCount}</strong></p>
+              ${createdAt ? `<p>Criado em: <small style="color:var(--text-muted)">${new Date(createdAt).toLocaleString()}</small></p>` : ''}
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <button class="btn" id="followBtn">Seguir</button>
+              <button class="btn" id="unfollowBtn" style="display:none;">Deixar de seguir</button>
+              ${ (firebase.auth().currentUser && firebase.auth().currentUser.uid === userId) ? `<button class="btn" id="editProfileBtn">Editar perfil</button>` : '' }
+            </div>
+          `;
+
+          // follow logic (localStorage)
+          const follows = JSON.parse(localStorage.getItem('mv_follows') || '[]');
+          const isFollowing = follows.includes(userId);
+          const followBtn = document.getElementById('followBtn');
+          const unfollowBtn = document.getElementById('unfollowBtn');
+          if (isFollowing) {
+            if (followBtn) followBtn.style.display = 'none';
+            if (unfollowBtn) unfollowBtn.style.display = null;
+          } else {
+            if (followBtn) followBtn.style.display = null;
+            if (unfollowBtn) unfollowBtn.style.display = 'none';
+          }
+          if (followBtn) followBtn.onclick = () => {
+            const arr = JSON.parse(localStorage.getItem('mv_follows') || '[]');
+            if (!arr.includes(userId)) arr.push(userId);
+            localStorage.setItem('mv_follows', JSON.stringify(arr));
+            if (followBtn) followBtn.style.display = 'none';
+            if (unfollowBtn) unfollowBtn.style.display = null;
+          };
+          if (unfollowBtn) unfollowBtn.onclick = () => {
+            let arr = JSON.parse(localStorage.getItem('mv_follows') || '[]');
+            arr = arr.filter(x => x !== userId);
+            localStorage.setItem('mv_follows', JSON.stringify(arr));
+            if (followBtn) followBtn.style.display = null;
+            if (unfollowBtn) unfollowBtn.style.display = 'none';
+          };
+
+          // edit profile handler (only for own profile)
+          const editBtn = document.getElementById('editProfileBtn');
+          if (editBtn) {
+            editBtn.onclick = async () => {
+              const newName = prompt('Novo username:', username);
+              if (!newName) return;
+              const uname = newName.replace(/\s+/g, '');
+              if (uname.length < 3 || uname.length > 20) return alert('Username deve ter entre 3 e 20 caracteres.');
+              try {
+                // check uniqueness
+                const snap = await firebaseDB.ref('usernames/' + uname).get();
+                if (snap.exists() && snap.val() !== userId) return alert('Username já em uso.');
+                // update mappings atomically: remove old mapping, set new
+                const updates = {};
+                const oldSnap = await firebaseDB.ref('users/' + userId + '/username').get();
+                const oldU = oldSnap.exists() ? oldSnap.val() : null;
+                if (oldU && oldU !== uname) updates['/usernames/' + oldU] = null;
+                updates['/users/' + userId + '/username'] = uname;
+                updates['/usernames/' + uname] = userId;
+                await firebaseDB.ref().update(updates);
+                alert('Username atualizado para ' + uname);
+                // refresh modal
+                this.openProfile(userId);
+              } catch (e) {
+                console.error(e);
+                alert('Erro ao atualizar username: ' + (e.message||e));
+              }
+            };
+          }
+
+          modal.style.display = 'block';
+        } catch (err) {
+          content.innerHTML = '<p>Erro ao carregar perfil.</p>';
+        }
       }
 
       async likeComment(commentId) {
@@ -3759,14 +4000,35 @@ https://exemplo.com/pagina2.jpg"></textarea>
             const nameEl = document.getElementById('userName');
             const roleEl = document.getElementById('userRole');
             const statusEl = document.getElementById('adminStatus');
+            const adminLoginEl = document.getElementById('adminLogin');
+            const becomeAdminBtn = document.getElementById('becomeAdminBtn');
+            const adminOnlyEls = document.querySelectorAll('.admin-only');
             if (user) {
-              nameEl && (nameEl.textContent = user.email || user.uid);
+              // try to get username from DB
+              try {
+                const unameSnap = await firebase.database().ref('users/' + user.uid + '/username').once('value');
+                const username = (unameSnap.exists() && unameSnap.val()) || user.email || user.uid;
+                nameEl && (nameEl.textContent = username);
+              } catch (err) {
+                nameEl && (nameEl.textContent = user.email || user.uid);
+              }
+              // hide admin login UI when logged in
+              if (adminLoginEl) adminLoginEl.style.display = 'none';
               try {
                 const snap = await firebase.database().ref('admins/' + user.uid).once('value');
                 const isAdmin = snap.exists() && snap.val() === true;
                 window.isAdmin = !!isAdmin;
+                // sync with app instance
+                if (window.app) {
+                  window.app.isAdmin = !!isAdmin;
+                  if (!window.app.currentUser) window.app.currentUser = {};
+                  window.app.currentUser.id = user.uid;
+                }
                 roleEl && (roleEl.textContent = isAdmin ? 'Admin' : 'Usuário');
                 statusEl && (statusEl.textContent = isAdmin ? '✅ Admin autenticado' : '❌ Não é admin');
+                // toggle admin-only UI
+                if (becomeAdminBtn) becomeAdminBtn.style.display = isAdmin ? null : 'none';
+                adminOnlyEls && adminOnlyEls.forEach(el => el.style.display = isAdmin ? null : 'none');
               } catch (e) {
                 console.error('Erro ao verificar admin:', e);
               }
@@ -3775,6 +4037,9 @@ https://exemplo.com/pagina2.jpg"></textarea>
               nameEl && (nameEl.textContent = 'Usuário');
               roleEl && (roleEl.textContent = 'Usuário');
               statusEl && (statusEl.textContent = 'Não autenticado');
+              if (adminLoginEl) adminLoginEl.style.display = null;
+              if (becomeAdminBtn) becomeAdminBtn.style.display = 'none';
+              adminOnlyEls && adminOnlyEls.forEach(el => el.style.display = 'none');
             }
           });
         }
@@ -3836,26 +4101,58 @@ https://exemplo.com/pagina2.jpg"></textarea>
           });
       };
 
+
       // Criar conta admin (cliente) - mostra UID para adicionar em /admins via Console
       window.createAdminAccount = function() {
+        const username = (document.getElementById('adminUsername').value || '').trim();
         const email = document.getElementById('adminEmail').value;
         const password = document.getElementById('adminPassword').value;
         const statusEl = document.getElementById('adminStatus');
-        if (!email || !password) {
-          if (statusEl) statusEl.textContent = 'Preencha email e senha para criar conta';
+        if (!username || !email || !password) {
+          if (statusEl) statusEl.textContent = 'Preencha username, email e senha para criar conta';
           return;
         }
-        firebase.auth().createUserWithEmailAndPassword(email, password)
-          .then(userCredential => {
+
+        // username rules: no spaces, lowercase, length 3-20
+        const uname = username.replace(/\s+/g, '');
+        if (uname.length < 3 || uname.length > 20) {
+          if (statusEl) statusEl.textContent = 'Username deve ter entre 3 e 20 caracteres (sem espaços)';
+          return;
+        }
+
+        const reservedAdmin = 'admin';
+        if (uname.toLowerCase() === reservedAdmin) {
+          // creating admin account: allow, but will set admins/{uid}=true
+        }
+
+        // check if username already exists
+        firebase.database().ref('usernames/' + uname).once('value')
+          .then(snap => {
+            if (snap.exists()) throw { code: 'username-taken', message: 'Username já existe' };
+            return firebase.auth().createUserWithEmailAndPassword(email, password);
+          })
+            .then(userCredential => {
             const uid = userCredential.user.uid;
             console.log('✅ Conta criada UID:', uid);
-            if (statusEl) statusEl.textContent = 'Conta criada. Copie seu UID: ' + uid + '. Adicione em /admins no Console.';
-            // Sign out to avoid accidental restricted writes until admin is added
+            // write username mapping and user profile with createdAt
+            const updates = {};
+            updates['/users/' + uid + '/username'] = uname;
+            updates['/users/' + uid + '/createdAt'] = new Date().toISOString();
+            updates['/usernames/' + uname] = uid;
+            // if reserved admin name, set admins/{uid}=true
+            if (uname.toLowerCase() === reservedAdmin) {
+              updates['/admins/' + uid] = true;
+            }
+            return firebase.database().ref().update(updates).then(() => uid);
+          })
+          .then(uid => {
+            if (statusEl) statusEl.textContent = 'Conta criada. Copie seu UID: ' + uid + '. Se for admin, já foi marcado.';
             return firebase.auth().signOut();
           })
           .catch(error => {
             console.error(error);
             let msg = 'Erro ao criar conta';
+            if (error.code === 'username-taken') msg = 'Username já em uso. Escolha outro.';
             switch (error.code) {
               case 'auth/email-already-in-use':
                 msg = 'Este email já está em uso.';
@@ -3891,5 +4188,13 @@ https://exemplo.com/pagina2.jpg"></textarea>
       }
     });
   </script>
+  <!-- Profile Modal -->
+  <div id="profileModal" style="display:none; position:fixed; right:20px; bottom:20px; width:320px; background:var(--bg-card); border:1px solid var(--border-color); padding:16px; border-radius:12px; box-shadow:var(--shadow-lg); z-index:9999;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <strong>Perfil</strong>
+      <button onclick="document.getElementById('profileModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="profileContent" style="margin-top:12px;"></div>
+  </div>
 </body>
 </html>
