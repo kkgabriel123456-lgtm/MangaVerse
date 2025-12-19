@@ -1,0 +1,3761 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MangaVerse - Leitor de Mangá Online com gerenciamento completo de biblioteca">
+  <meta name="keywords" content="mangá, leitor, online, biblioteca">
+  <meta name="author" content="MangaVerse">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>MangaVerse - Leitor de Mangá Online</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #13131a;
+      --bg-card: #1a1a24;
+      --bg-hover: #242435;
+      --accent-primary: #8b5cf6;
+      --accent-secondary: #a78bfa;
+      --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0d0;
+      --text-muted: #6b6b8b;
+      --border-color: #2a2a3e;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.4);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f5f7fa;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-hover: #e8ecf2;
+      --text-primary: #1a1a2e;
+      --text-secondary: #4a4a6a;
+      --text-muted: #7a7a9a;
+      --border-color: #d0d5dd;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Main App Container */
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo i {
+      font-size: 32px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: var(--shadow-glow);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 24px;
+    }
+
+    .top-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-box {
+      flex: 1;
+      display: flex;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 12px 20px;
+      min-width: 300px;
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hero Banner */
+    .hero {
+      background: var(--accent-gradient);
+      border-radius: 20px;
+      padding: 48px;
+      margin-bottom: 40px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.1)"/></svg>');
+      opacity: 0.1;
+    }
+
+    .hero h2 {
+      font-size: 48px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .hero p {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 32px;
+      position: relative;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      display: block;
+      font-size: 36px;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Manga Grid */
+    .manga-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .manga-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid var(--border-color);
+    }
+
+    .manga-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-primary);
+    }
+
+    .manga-cover {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .manga-info {
+      padding: 16px;
+    }
+
+    .manga-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .manga-meta {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .manga-rating {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--warning);
+    }
+
+    /* Content Sections */
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 15px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border-left: 4px solid var(--accent-primary);
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      min-width: 300px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    .toast.warning { border-left-color: var(--warning); }
+
+    /* Novos estilos para botões de ação */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .edit-btn {
+      background: var(--warning);
+      color: white;
+    }
+
+    .delete-btn {
+      background: var(--danger);
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+    }
+
+    .delete-btn:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+    }
+
+    .chapter-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .manga-admin-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--accent-gradient);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .confirmation-text {
+      text-align: center;
+      color: var(--text-secondary);
+      margin: 20px 0;
+    }
+
+    .danger-zone {
+      border: 2px solid var(--danger);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .danger-zone h4 {
+      color: var(--danger);
+      margin-bottom: 12px;
+    }
+
+    /* Reader */
+    .reader-nav {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding: 20px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      flex-wrap: wrap;
+    }
+
+    .reader-pages {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .reader-page {
+      margin-bottom: 20px;
+    }
+
+    .reader-page img {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Manga Details */
+    .manga-detail {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .detail-cover img {
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .detail-info h1 {
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+
+    .detail-meta {
+      display: flex;
+      gap: 16px;
+      margin: 24px 0;
+      flex-wrap: wrap;
+    }
+
+    .detail-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: var(--bg-card);
+      border-radius: 12px;
+    }
+
+    .chapters-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chapter-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .chapter-item:hover {
+      background: var(--bg-hover);
+      transform: translateX(4px);
+    }
+
+    /* Animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .manga-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .manga-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .manga-card:hover::before {
+      left: 100%;
+    }
+
+    .stat-number {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-gradient);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      background: var(--accent-gradient);
+      color: white;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Lock Screen */
+    .lock-screen {
+      display: none;
+    }
+
+    .lock-screen.hidden {
+      display: none;
+    }
+
+    .lock-error {
+      color: var(--danger);
+      text-align: center;
+      font-size: 14px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* Comments Section */
+    .comments-section {
+      margin-top: 48px;
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: 16px;
+    }
+
+    .comment-form {
+      margin-bottom: 32px;
+    }
+
+    .comment-input {
+      width: 100%;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 15px;
+      margin-bottom: 12px;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .comment-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .comment-item {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .comment-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .comment-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+    }
+
+    .comment-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comment-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .comment-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .comment-text {
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .comment-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .comment-action {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      transition: 0.3s;
+    }
+
+    .comment-action:hover {
+      color: var(--accent-primary);
+    }
+
+    .comment-action.liked {
+      color: var(--accent-primary);
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .filter-btn.active {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .admin-badge {
+      background: var(--accent-gradient);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Menu hamburguer móvel */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 101;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+    }
+
+    .mobile-menu i {
+      font-size: 24px;
+    }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-primary);
+    }
+
+    .stat-card i {
+      font-size: 32px;
+      margin-bottom: 12px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-card h4 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Reading mode */
+    .reader-mode-options {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    /* Settings Panel */
+    .settings-panel {
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 32px;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: var(--bg-hover);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .toggle-switch.active {
+      background: var(--accent-primary);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch.active::after {
+      left: 27px;
+    }
+
+    /* Skeleton Loading */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 12px;
+    }
+
+    .skeleton-card {
+      height: 400px;
+    }
+
+    /* Notifications */
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--danger);
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    /* Admin Code Button */
+    .admin-code-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .mobile-menu {
+        display: block;
+      }
+
+      .manga-detail {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h2 {
+        font-size: 32px;
+      }
+
+      .stats {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .admin-code-btn {
+        bottom: 80px;
+        right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Main App Container -->
+  <div class="container" id="appContainer">
+    <!-- Admin Code Modal -->
+    <div class="modal" id="adminCodeModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-crown"></i> Tornar-se Administrador</h2>
+          <button class="btn btn-secondary btn-icon" id="closeAdminCodeBtn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="text-align: center; color: var(--text-muted); margin-bottom: 24px;">
+            Digite o código especial para se tornar administrador
+          </p>
+          <div class="form-group">
+            <label>Código de Acesso</label>
+            <input type="password" id="adminCodeInput" placeholder="123456789" maxlength="9">
+          </div>
+          <button class="btn btn-primary" id="submitAdminCodeBtn" style="width: 100%;">
+            <i class="fas fa-unlock"></i> Verificar Código
+          </button>
+          <p class="lock-error" id="adminCodeError" style="text-align: center; margin-top: 12px;">Código incorreto!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal" id="adminLoginModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>🔐 Acesso Administrativo</h2>
+          <button class="btn btn-secondary btn-icon" id="closeAdminLoginBtn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="text-align: center; color: var(--text-muted); margin-bottom: 24px;">
+            Digite a senha de administrador para adicionar mangás e capítulos
+          </p>
+          <div class="form-group">
+            <label>Senha Admin</label>
+            <input type="password" id="adminPasswordInput" placeholder="••••" maxlength="4">
+          </div>
+          <button class="btn btn-primary" id="adminUnlockBtn" style="width: 100%;">
+            <i class="fas fa-unlock"></i> Entrar como Admin
+          </button>
+          <p class="lock-error" id="adminError">Senha incorreta!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Admin Code Button -->
+    <button class="btn btn-primary admin-code-btn" id="becomeAdminBtn">
+      <i class="fas fa-crown"></i> Tornar-se Admin
+    </button>
+
+    <div class="container">
+      <!-- Sidebar -->
+      <div class="sidebar" id="sidebar">
+        <div class="logo">
+          <i class="fas fa-book-open"></i>
+          <h1>MangaVerse</h1>
+        </div>
+
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-role" id="userRole">Usuário</div>
+          </div>
+        </div>
+
+        <nav>
+          <div class="nav-item active" data-section="home">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+          </div>
+          <div class="nav-item" data-section="library">
+            <i class="fas fa-book"></i>
+            <span>Biblioteca</span>
+          </div>
+          <div class="nav-item" data-section="favorites">
+            <i class="fas fa-star"></i>
+            <span>Favoritos</span>
+          </div>
+          <div class="nav-item" data-section="recent">
+            <i class="fas fa-history"></i>
+            <span>Recentes</span>
+          </div>
+          <div class="nav-item" data-section="settings">
+            <i class="fas fa-cog"></i>
+            <span>Configurações</span>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar mangás...">
+          </div>
+          <button class="btn btn-primary" id="addMangaBtn">
+            <i class="fas fa-plus"></i> Adicionar
+          </button>
+          <button class="btn btn-secondary btn-icon" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+
+        <!-- Home Section -->
+        <div class="content-section active" id="home">
+          <div class="hero">
+            <h2>Explore o Universo dos Mangás</h2>
+            <p>Milhares de histórias incríveis esperando por você</p>
+            <div class="stats">
+              <div class="stat">
+                <span class="stat-number" id="totalMangas">0</span>
+                <span class="stat-label">Mangás</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number" id="totalChapters">0</span>
+                <span class="stat-label">Capítulos</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number" id="totalRead">0</span>
+                <span class="stat-label">Lidos</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <i class="fas fa-fire"></i>
+              <h4 id="readingNow">0</h4>
+              <p>Lendo agora</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-star"></i>
+              <h4 id="favoritesCount">0</h4>
+              <p>Favoritos</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-clock"></i>
+              <h4 id="hoursRead">0h</h4>
+              <p>Tempo de leitura</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-trophy"></i>
+              <h4>Nível <span id="userLevel">1</span></h4>
+              <p>Leitor Expert</p>
+            </div>
+          </div>
+
+          <h3 class="section-title">
+            <i class="fas fa-fire"></i> Em Destaque
+          </h3>
+          <div class="manga-grid" id="featuredGrid"></div>
+
+          <h3 class="section-title">
+            <i class="fas fa-clock"></i> Atualizações Recentes
+          </h3>
+          <div class="manga-grid" id="recentGrid"></div>
+        </div>
+
+        <!-- Library Section -->
+        <div class="content-section" id="library">
+          <h3 class="section-title">
+            <i class="fas fa-book"></i> Minha Biblioteca
+          </h3>
+          <div class="manga-grid" id="libraryGrid"></div>
+        </div>
+
+        <!-- Favorites Section -->
+        <div class="content-section" id="favorites">
+          <h3 class="section-title">
+            <i class="fas fa-star"></i> Favoritos
+          </h3>
+          <div class="manga-grid" id="favoritesGrid"></div>
+        </div>
+
+        <!-- Recent Section -->
+        <div class="content-section" id="recent">
+          <h3 class="section-title">
+            <i class="fas fa-history"></i> Lidos Recentemente
+          </h3>
+          <div class="manga-grid" id="recentReadGrid"></div>
+        </div>
+
+        <!-- Manga Detail Section -->
+        <div class="content-section" id="mangaDetail">
+          <button class="btn btn-secondary" id="backBtn">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <br><br>
+          <div class="manga-detail">
+            <div class="detail-cover">
+              <img id="detailCover" src="" alt="">
+            </div>
+            <div class="detail-info">
+              <h1 id="detailTitle"></h1>
+              <div class="detail-meta">
+                <div class="detail-stat">
+                  <i class="fas fa-user"></i>
+                  <span id="detailAuthor"></span>
+                </div>
+                <div class="detail-stat">
+                  <i class="fas fa-calendar"></i>
+                  <span id="detailYear"></span>
+                </div>
+                <div class="detail-stat">
+                  <i class="fas fa-star"></i>
+                  <span id="detailRating"></span>
+                </div>
+              </div>
+              <p id="detailDescription"></p>
+              <br>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="startReadingBtn">
+                  <i class="fas fa-play"></i> Começar a Ler
+                </button>
+                <button class="btn btn-secondary" id="favoriteBtn">
+                  <i class="far fa-star"></i> Favoritar
+                </button>
+                <button class="btn btn-secondary" id="addChapterBtn">
+                  <i class="fas fa-plus"></i> Adicionar Capítulo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="section-title">Capítulos</h3>
+          <div class="chapters-list" id="chaptersList"></div>
+        </div>
+
+        <!-- Reader Section -->
+        <div class="content-section" id="reader">
+          <button class="btn btn-secondary" id="closeReaderBtn">
+            <i class="fas fa-times"></i> Fechar Leitor
+          </button>
+          <br><br>
+
+          <!-- Reading Mode Options -->
+          <div class="reader-mode-options">
+            <div class="mode-btn active" data-mode="single">
+              <i class="fas fa-file"></i> Página Única
+            </div>
+            <div class="mode-btn" data-mode="double">
+              <i class="fas fa-copy"></i> Página Dupla
+            </div>
+            <div class="mode-btn" data-mode="scroll">
+              <i class="fas fa-scroll"></i> Rolagem Contínua
+            </div>
+          </div>
+
+          <div class="reader-nav">
+            <button class="btn btn-secondary" id="prevChapterBtn">
+              <i class="fas fa-chevron-left"></i> Cap. Anterior
+            </button>
+            <button class="btn btn-secondary" id="prevPageBtn">
+              <i class="fas fa-arrow-left"></i> Anterior
+            </button>
+            <span id="pageInfo">Página 1 de 1</span>
+            <button class="btn btn-secondary" id="nextPageBtn">
+              Próxima <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="btn btn-secondary" id="nextChapterBtn">
+              Próximo Cap. <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-bar">
+            <div class="progress-fill" id="readProgress" style="width: 0%"></div>
+          </div>
+          <br>
+
+          <div class="reader-pages" id="readerPages"></div>
+
+          <!-- Comments Section -->
+          <div class="comments-section">
+            <h3 style="margin-bottom: 24px;">
+              <i class="fas fa-comments"></i> Comentários (<span id="commentCount">0</span>)
+            </h3>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+              <button class="filter-btn active" data-filter="recent">
+                <i class="fas fa-clock"></i> Mais Recentes
+              </button>
+              <button class="filter-btn" data-filter="popular">
+                <i class="fas fa-fire"></i> Mais Populares
+              </button>
+              <button class="filter-btn" data-filter="oldest">
+                <i class="fas fa-history"></i> Mais Antigos
+              </button>
+            </div>
+
+            <!-- Comment Form -->
+            <div class="comment-form">
+              <textarea class="comment-input" id="commentInput" placeholder="Adicione seu comentário sobre este capítulo..."></textarea>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn btn-primary" id="addCommentBtn">
+                  <i class="fas fa-paper-plane"></i> Comentar
+                </button>
+              </div>
+            </div>
+
+            <!-- Comments List -->
+            <div class="comments-list" id="commentsList">
+              <!-- Dynamic comments -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="content-section" id="settings">
+          <h3 class="section-title">
+            <i class="fas fa-cog"></i> Configurações
+          </h3>
+
+          <div class="settings-panel">
+            <div class="settings-row">
+              <div>
+                <strong>Modo Escuro</strong>
+                <p style="font-size: 14px; color: var(--text-muted);">Ativar tema escuro</p>
+              </div>
+              <div class="toggle-switch" id="darkModeToggle">
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <strong>Senha de Admin</strong>
+                <p style="font-size: 14px; color: var(--text-muted);">Alterar senha de administrador</p>
+              </div>
+              <button class="btn btn-secondary" id="changePasswordBtn">
+                <i class="fas fa-key"></i> Alterar
+              </button>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <strong>Resetar Estatísticas</strong>
+                <p style="font-size: 14px; color: var(--text-muted);">Zerar progresso e níveis</p>
+              </div>
+              <button class="btn btn-secondary" id="resetStatsBtn">
+                <i class="fas fa-redo"></i> Resetar
+              </button>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <strong>Limpar Biblioteca</strong>
+                <p style="font-size: 14px; color: var(--text-muted); color: var(--danger);">⚠️ Remove todos os mangás</p>
+              </div>
+              <button class="btn btn-secondary" id="clearLibraryBtn" style="background: var(--danger); color: white;">
+                <i class="fas fa-trash"></i> Limpar
+              </button>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <strong>Exportar Dados</strong>
+                <p style="font-size: 14px; color: var(--text-muted);">Baixar backup dos seus dados</p>
+              </div>
+              <button class="btn btn-secondary" id="exportDataBtn">
+                <i class="fas fa-download"></i> Exportar
+              </button>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <strong>Importar Dados</strong>
+                <p style="font-size: 14px; color: var(--text-muted);">Restaurar dados de backup</p>
+              </div>
+              <button class="btn btn-secondary" id="importDataBtn">
+                <i class="fas fa-upload"></i> Importar
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-panel">
+            <h4 style="margin-bottom: 16px;">Sobre o MangaVerse</h4>
+            <p style="color: var(--text-muted); line-height: 1.8;">
+              <strong>Versão:</strong> 3.0.0<br>
+              <strong>Último login:</strong> <span id="lastLogin"></span><br>
+              <strong>Membro desde:</strong> <span id="memberSince"></span><br>
+              <strong>Recursos:</strong> Leitor protegido, múltiplos modos de leitura, estatísticas, favoritos<br>
+              <br>
+              <strong>Atalhos do teclado:</strong><br>
+              • Setas ← → - Navegar páginas<br>
+              • Modo de leitura contínua disponível<br>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal" id="changePasswordModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Alterar Senha</h2>
+        <button class="btn btn-secondary btn-icon" id="closePasswordModalBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Senha Atual</label>
+          <input type="password" id="currentPassword" placeholder="••••" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Nova Senha</label>
+          <input type="password" id="newPassword" placeholder="••••" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Confirmar Nova Senha</label>
+          <input type="password" id="confirmPassword" placeholder="••••" maxlength="4">
+        </div>
+        <button class="btn btn-primary" id="savePasswordBtn" style="width: 100%;">
+          <i class="fas fa-save"></i> Salvar Nova Senha
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="editMangaModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>✏️ Editar Mangá</h2>
+        <button class="btn btn-secondary btn-icon" id="closeEditMangaBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="editMangaTitle" placeholder="Ex: One Piece">
+        </div>
+        <div class="form-group">
+          <label>Autor</label>
+          <input type="text" id="editMangaAuthor" placeholder="Ex: Eiichiro Oda">
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea id="editMangaDescription" rows="4" placeholder="Sinopse do mangá..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" id="editMangaYear" value="2024">
+        </div>
+        <div class="form-group">
+          <label>URL da Capa</label>
+          <input type="text" id="editMangaCover" placeholder="https://...">
+        </div>
+        <div class="danger-zone">
+          <h4><i class="fas fa-exclamation-triangle"></i> Zona de Perigo</h4>
+          <button class="btn delete-btn" id="deleteMangaBtn" style="width: 100%;">
+            <i class="fas fa-trash"></i> Excluir este Mangá
+          </button>
+          <p style="font-size: 12px; color: var(--danger); margin-top: 8px;">
+            ⚠️ Esta ação é irreversível e excluirá todos os capítulos!
+          </p>
+        </div>
+        <button class="btn btn-primary" id="saveEditMangaBtn" style="width: 100%; margin-top: 20px;">
+          <i class="fas fa-save"></i> Salvar Alterações
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="editChapterModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📝 Editar Capítulo</h2>
+        <button class="btn btn-secondary btn-icon" id="closeEditChapterModalBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Número do Capítulo</label>
+          <input type="number" id="editChapterNumber" min="1">
+        </div>
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="editChapterTitle" placeholder="Título do capítulo">
+        </div>
+        <div class="form-group">
+          <label>URLs das Páginas (uma por linha)</label>
+          <textarea id="editChapterPages" rows="6" placeholder="https://exemplo.com/pagina1.jpg
+https://exemplo.com/pagina2.jpg"></textarea>
+        </div>
+        <div class="danger-zone">
+          <h4><i class="fas fa-exclamation-triangle"></i> Zona de Perigo</h4>
+          <button class="btn delete-btn" id="deleteChapterBtn" style="width: 100%;">
+            <i class="fas fa-trash"></i> Excluir este Capítulo
+          </button>
+        </div>
+        <button class="btn btn-primary" id="saveEditChapterBtn" style="width: 100%; margin-top: 20px;">
+          <i class="fas fa-save"></i> Salvar Alterações
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="deleteConfirmModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i> Confirmar Exclusão</h2>
+        <button class="btn btn-secondary btn-icon" id="closeDeleteConfirmBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="confirmation-text">
+          <i class="fas fa-exclamation-circle" style="font-size: 48px; color: var(--danger); margin-bottom: 16px;"></i>
+          <p id="deleteConfirmMessage"></p>
+          <p style="color: var(--danger); font-weight: bold; margin-top: 16px;">
+            ⚠️ Esta ação não pode ser desfeita!
+          </p>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button class="btn btn-secondary" id="cancelDeleteBtn" style="flex: 1;">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button class="btn delete-btn" id="confirmDeleteBtn" style="flex: 1;">
+            <i class="fas fa-trash"></i> Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="addMangaModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Adicionar Novo Mangá</h2>
+        <button class="btn btn-secondary btn-icon" id="closeModalBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="mangaTitle" placeholder="Ex: One Piece">
+        </div>
+        <div class="form-group">
+          <label>Autor</label>
+          <input type="text" id="mangaAuthor" placeholder="Ex: Eiichiro Oda">
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea id="mangaDescription" rows="4" placeholder="Sinopse do mangá..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" id="mangaYear" value="2024">
+        </div>
+        <div class="form-group">
+          <label>URL da Capa</label>
+          <input type="text" id="mangaCover" placeholder="https://...">
+        </div>
+        <button class="btn btn-primary" id="saveMangaBtn" style="width: 100%;">
+          <i class="fas fa-save"></i> Salvar Mangá
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="addChapterModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Adicionar Capítulo</h2>
+        <button class="btn btn-secondary btn-icon" id="closeChapterModalBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Número do Capítulo</label>
+          <input type="number" id="chapterNumber" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="chapterTitle" placeholder="Título do capítulo">
+        </div>
+        <div class="form-group">
+          <label>URLs das Páginas (uma por linha)</label>
+          <textarea id="chapterPages" rows="6" placeholder="https://exemplo.com/pagina1.jpg
+https://exemplo.com/pagina2.jpg"></textarea>
+        </div>
+        <button class="btn btn-primary" id="saveChapterBtn" style="width: 100%;">
+          <i class="fas fa-save"></i> Salvar Capítulo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    class Database {
+      constructor() {
+        this.db = null;
+        this.dbName = 'MangaVerseDB';
+        this.dbVersion = 5;
+        this.init();
+      }
+
+      async init() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(this.dbName, this.dbVersion);
+          
+          request.onerror = () => {
+            console.error('Erro ao abrir IndexedDB');
+            reject(request.error);
+          };
+          
+          request.onsuccess = () => {
+            this.db = request.result;
+            console.log('IndexedDB inicializada com sucesso');
+            resolve();
+          };
+          
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            
+            // Criar store de usuários
+            if (!db.objectStoreNames.contains('users')) {
+              const userStore = db.createObjectStore('users', { keyPath: 'id' });
+              userStore.createIndex('username', 'username', { unique: true });
+            }
+            
+            // Criar store de mangás
+            if (!db.objectStoreNames.contains('mangas')) {
+              const mangaStore = db.createObjectStore('mangas', { keyPath: 'id' });
+              mangaStore.createIndex('userId', 'userId', { unique: false });
+              mangaStore.createIndex('title', 'title', { unique: false });
+            }
+            
+            // Criar store de capítulos
+            if (!db.objectStoreNames.contains('chapters')) {
+              const chapterStore = db.createObjectStore('chapters', { keyPath: 'id' });
+              chapterStore.createIndex('mangaId', 'mangaId', { unique: false });
+              chapterStore.createIndex('userId', 'userId', { unique: false });
+            }
+            
+            // Criar store de comentários
+            if (!db.objectStoreNames.contains('comments')) {
+              const commentStore = db.createObjectStore('comments', { keyPath: 'id' });
+              commentStore.createIndex('chapterId', 'chapterId', { unique: false });
+              commentStore.createIndex('userId', 'userId', { unique: false });
+            }
+            
+            // Criar store de progresso
+            if (!db.objectStoreNames.contains('progress')) {
+              const progressStore = db.createObjectStore('progress', { keyPath: ['userId', 'chapterId'] });
+              progressStore.createIndex('userId', 'userId', { unique: false });
+              progressStore.createIndex('chapterId', 'chapterId', { unique: false });
+            }
+            
+            // Criar store de favoritos
+            if (!db.objectStoreNames.contains('favorites')) {
+              const favoriteStore = db.createObjectStore('favorites', { keyPath: ['userId', 'mangaId'] });
+              favoriteStore.createIndex('userId', 'userId', { unique: false });
+              favoriteStore.createIndex('mangaId', 'mangaId', { unique: false });
+            }
+            
+            // Criar store de estatísticas
+            if (!db.objectStoreNames.contains('stats')) {
+              const statsStore = db.createObjectStore('stats', { keyPath: 'userId' });
+            }
+            
+            // Criar store de configurações
+            if (!db.objectStoreNames.contains('settings')) {
+              const settingsStore = db.createObjectStore('settings', { keyPath: 'userId' });
+            }
+          };
+        });
+      }
+
+      // Métodos para usuários
+      async saveUser(user) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['users'], 'readwrite');
+          const store = transaction.objectStore('users');
+          const request = store.put(user);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getUser(id) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['users'], 'readonly');
+          const store = transaction.objectStore('users');
+          const request = store.get(id);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para mangás
+      async saveManga(manga) {
+        // Se estiver usando Firebase, salvar no Firebase (compartilhado)
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              await firebaseDB.ref(`mangas/${manga.id}`).set(manga);
+              console.log('✅ Mangá salvo no Firebase (compartilhado)');
+              resolve();
+            } catch (err) {
+              console.error('Erro ao salvar mangá:', err);
+              resolve();
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['mangas'], 'readwrite');
+          const store = transaction.objectStore('mangas');
+          const request = store.put(manga);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getManga(id) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['mangas'], 'readonly');
+          const store = transaction.objectStore('mangas');
+          const request = store.get(id);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getUserMangas(userId) {
+        // Se estiver usando Firebase, carregar todos os mangás
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              const snapshot = await firebaseDB.ref('mangas').get();
+              const mangas = [];
+              snapshot.forEach((childSnapshot) => {
+                mangas.push(childSnapshot.val());
+              });
+              resolve(mangas);
+            } catch (err) {
+              console.error('Erro ao carregar mangás do Firebase:', err);
+              resolve([]);
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['mangas'], 'readonly');
+          const store = transaction.objectStore('mangas');
+          const index = store.index('userId');
+          const request = index.getAll(userId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getAllMangas() {
+        // Se estiver usando Firebase, carregar todos os mangás
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              const snapshot = await firebaseDB.ref('mangas').get();
+              const mangas = [];
+              snapshot.forEach((childSnapshot) => {
+                mangas.push(childSnapshot.val());
+              });
+              resolve(mangas);
+            } catch (err) {
+              console.error('Erro ao carregar mangás do Firebase:', err);
+              resolve([]);
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['mangas'], 'readonly');
+          const store = transaction.objectStore('mangas');
+          const request = store.getAll();
+          
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async deleteManga(id) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['mangas'], 'readwrite');
+          const store = transaction.objectStore('mangas');
+          const request = store.delete(id);
+          
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para capítulos
+      async saveChapter(chapter) {
+        // Se estiver usando Firebase, salvar no Firebase (compartilhado)
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              await firebaseDB.ref(`chapters/${chapter.id}`).set(chapter);
+              console.log('✅ Capítulo salvo no Firebase (compartilhado)');
+              resolve();
+            } catch (err) {
+              console.error('Erro ao salvar capítulo:', err);
+              resolve();
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['chapters'], 'readwrite');
+          const store = transaction.objectStore('chapters');
+          const request = store.put(chapter);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getMangaChapters(mangaId) {
+        // Se estiver usando Firebase, carregar capítulos do Firebase
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              const snapshot = await firebaseDB.ref('chapters').get();
+              const chapters = [];
+              snapshot.forEach((childSnapshot) => {
+                const chapter = childSnapshot.val();
+                if (chapter.mangaId === mangaId) {
+                  chapters.push(chapter);
+                }
+              });
+              chapters.sort((a, b) => a.number - b.number);
+              resolve(chapters);
+            } catch (err) {
+              console.error('Erro ao carregar capítulos:', err);
+              resolve([]);
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['chapters'], 'readonly');
+          const store = transaction.objectStore('chapters');
+          const index = store.index('mangaId');
+          const request = index.getAll(mangaId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async deleteChapter(id) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['chapters'], 'readwrite');
+          const store = transaction.objectStore('chapters');
+          const request = store.delete(id);
+          
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para comentários
+      async saveComment(comment) {
+        // Se estiver usando Firebase, salvar no Firebase
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              comment.createdAt = comment.createdAt || new Date().toISOString();
+              await firebaseDB.ref(`comments/${comment.id}`).set(comment);
+              resolve();
+            } catch (err) {
+              console.error('Erro ao salvar comentário:', err);
+              resolve();
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['comments'], 'readwrite');
+          const store = transaction.objectStore('comments');
+          const request = store.put(comment);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getChapterComments(chapterId) {
+        // Se estiver usando Firebase, carregar comentários do Firebase
+        if (firebaseDB) {
+          return new Promise(async (resolve) => {
+            try {
+              const snapshot = await firebaseDB.ref('comments').get();
+              const comments = [];
+              snapshot.forEach((childSnapshot) => {
+                const comment = childSnapshot.val();
+                if (comment.chapterId === chapterId) {
+                  comments.push(comment);
+                }
+              });
+              comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+              resolve(comments);
+            } catch (err) {
+              console.error('Erro ao carregar comentários:', err);
+              resolve([]);
+            }
+          });
+        }
+
+        // Fallback para IndexedDB local
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['comments'], 'readonly');
+          const store = transaction.objectStore('comments');
+          const index = store.index('chapterId');
+          const request = index.getAll(chapterId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async deleteComment(id) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['comments'], 'readwrite');
+          const store = transaction.objectStore('comments');
+          const request = store.delete(id);
+          
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para progresso
+      async saveProgress(progress) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['progress'], 'readwrite');
+          const store = transaction.objectStore('progress');
+          const request = store.put(progress);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getUserProgress(userId, chapterId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['progress'], 'readonly');
+          const store = transaction.objectStore('progress');
+          const request = store.get([userId, chapterId]);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getUserAllProgress(userId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['progress'], 'readonly');
+          const store = transaction.objectStore('progress');
+          const index = store.index('userId');
+          const request = index.getAll(userId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para favoritos
+      async saveFavorite(favorite) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['favorites'], 'readwrite');
+          const store = transaction.objectStore('favorites');
+          const request = store.put(favorite);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async deleteFavorite(userId, mangaId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['favorites'], 'readwrite');
+          const store = transaction.objectStore('favorites');
+          const request = store.delete([userId, mangaId]);
+          
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getUserFavorites(userId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['favorites'], 'readonly');
+          const store = transaction.objectStore('favorites');
+          const index = store.index('userId');
+          const request = index.getAll(userId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async isFavorite(userId, mangaId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['favorites'], 'readonly');
+          const store = transaction.objectStore('favorites');
+          const request = store.get([userId, mangaId]);
+          
+          request.onsuccess = () => resolve(!!request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para estatísticas
+      async saveStats(stats) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['stats'], 'readwrite');
+          const store = transaction.objectStore('stats');
+          const request = store.put(stats);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getStats(userId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['stats'], 'readonly');
+          const store = transaction.objectStore('stats');
+          const request = store.get(userId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para configurações
+      async saveSettings(settings) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['settings'], 'readwrite');
+          const store = transaction.objectStore('settings');
+          const request = store.put(settings);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async getSettings(userId) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['settings'], 'readonly');
+          const store = transaction.objectStore('settings');
+          const request = store.get(userId);
+          
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      // Métodos para backup/restore
+      async exportUserData(userId) {
+        const data = {
+          user: await this.getUser(userId),
+          mangas: await this.getUserMangas(userId),
+          favorites: await this.getUserFavorites(userId),
+          progress: await this.getUserAllProgress(userId),
+          stats: await this.getStats(userId),
+          settings: await this.getSettings(userId)
+        };
+        
+        // Adicionar capítulos e comentários
+        for (const manga of data.mangas) {
+          manga.chapters = await this.getMangaChapters(manga.id);
+          for (const chapter of manga.chapters) {
+            chapter.comments = await this.getChapterComments(chapter.id);
+          }
+        }
+        
+        return data;
+      }
+
+      async importUserData(userId, data) {
+        // Limpar dados antigos
+        await this.clearUserData(userId);
+        
+        // Salvar novos dados
+        if (data.user) await this.saveUser(data.user);
+        if (data.mangas) {
+          for (const manga of data.mangas) {
+            manga.userId = userId;
+            await this.saveManga(manga);
+            
+            if (manga.chapters) {
+              for (const chapter of manga.chapters) {
+                chapter.userId = userId;
+                chapter.mangaId = manga.id;
+                await this.saveChapter(chapter);
+                
+                if (chapter.comments) {
+                  for (const comment of chapter.comments) {
+                    comment.userId = userId;
+                    comment.chapterId = chapter.id;
+                    await this.saveComment(comment);
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        if (data.favorites) {
+          for (const favorite of data.favorites) {
+            favorite.userId = userId;
+            await this.saveFavorite(favorite);
+          }
+        }
+        
+        if (data.progress) {
+          for (const progress of data.progress) {
+            progress.userId = userId;
+            await this.saveProgress(progress);
+          }
+        }
+        
+        if (data.stats) {
+          data.stats.userId = userId;
+          await this.saveStats(data.stats);
+        }
+        
+        if (data.settings) {
+          data.settings.userId = userId;
+          await this.saveSettings(data.settings);
+        }
+      }
+
+      async clearUserData(userId) {
+        // Implementar limpeza de dados do usuário
+        const transaction = this.db.transaction(
+          ['mangas', 'chapters', 'comments', 'favorites', 'progress', 'stats', 'settings'],
+          'readwrite'
+        );
+        
+        // Limpar cada store
+        const stores = ['mangas', 'chapters', 'comments', 'favorites', 'progress', 'stats', 'settings'];
+        for (const storeName of stores) {
+          const store = transaction.objectStore(storeName);
+          const index = store.index('userId');
+          const request = index.getAllKeys(userId);
+          
+          request.onsuccess = () => {
+            const keys = request.result;
+            keys.forEach(key => {
+              if (Array.isArray(key)) {
+                store.delete(key);
+              } else {
+                store.delete(key);
+              }
+            });
+          };
+        }
+        
+        return new Promise((resolve) => {
+          transaction.oncomplete = () => resolve();
+        });
+      }
+    }
+
+    class MangaVerse {
+      constructor() {
+        this.db = null;
+        this.currentUser = null;
+        this.mangas = [];
+        this.currentManga = null;
+        this.currentChapter = null;
+        this.currentPage = 1;
+        this.theme = 'dark';
+        this.isAdmin = false;
+        this.readingMode = 'single';
+        this.commentFilter = 'recent';
+        this.pendingDelete = {
+          type: null,
+          mangaId: null,
+          chapterNumber: null,
+          commentId: null
+        };
+      }
+
+      async init() {
+        await this.initializeDatabase();
+        await this.initializeUser();
+        await this.loadUserData();
+        this.setupEventListeners();
+        this.updateUI();
+      }
+
+      async initializeDatabase() {
+        this.db = new Database();
+        await this.db.init();
+      }
+
+      async initializeUser() {
+        // Criar usuário padrão
+        const defaultUserId = 'default-user';
+        let user = await this.db.getUser(defaultUserId);
+        
+        if (!user) {
+          user = {
+            id: defaultUserId,
+            name: 'Usuário',
+            username: 'usuario',
+            role: 'user',
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString(),
+            adminPassword: '1234' // Senha padrão de admin
+          };
+          
+          await this.db.saveUser(user);
+          
+          // Criar estatísticas iniciais
+          const stats = {
+            userId: user.id,
+            totalRead: 0,
+            hoursRead: 0,
+            level: 1,
+            mangasAdded: 0,
+            chaptersRead: 0,
+            favorites: 0
+          };
+
+          // Criar configurações iniciais
+          const settings = {
+            userId: user.id,
+            theme: 'dark',
+            readingMode: 'single',
+            autoSave: true,
+            notifications: true
+          };
+
+          await this.db.saveStats(stats);
+          await this.db.saveSettings(settings);
+        }
+        
+        this.currentUser = user;
+        this.isAdmin = user.role === 'admin';
+      }
+
+      async loadUserData() {
+        if (!this.currentUser) return;
+
+        // Carregar configurações
+        const settings = await this.db.getSettings(this.currentUser.id);
+        if (settings) {
+          this.theme = settings.theme || 'dark';
+          this.readingMode = settings.readingMode || 'single';
+        }
+
+        // Carregar TODOS os mangás (banco compartilhado)
+        if (firebaseDB) {
+          // Se estiver usando Firebase, carregar TODOS os mangás
+          this.mangas = await this.db.getAllMangas();
+          console.log(`📚 Carregados ${this.mangas.length} mangás do Firebase (compartilhado)`);
+        } else {
+          // Se for IndexedDB local, carregar mangás do usuário
+          this.mangas = await this.db.getUserMangas(this.currentUser.id);
+        }
+        
+        // Se não houver mangás, carregar template
+        if (this.mangas.length === 0) {
+          await this.loadTemplateMangas();
+        }
+
+        // Carregar favoritos e progresso para cada mangá
+        for (const manga of this.mangas) {
+          manga.favorite = await this.db.isFavorite(this.currentUser.id, manga.id);
+          
+          // Carregar capítulos
+          manga.chapters = await this.db.getMangaChapters(manga.id);
+          
+          // Carregar progresso para cada capítulo
+          for (const chapter of manga.chapters) {
+            const progress = await this.db.getUserProgress(this.currentUser.id, chapter.id);
+            chapter.read = !!progress;
+            
+            // Carregar comentários
+            chapter.comments = await this.db.getChapterComments(chapter.id);
+          }
+        }
+
+        // Aplicar tema
+        document.documentElement.setAttribute('data-theme', this.theme);
+      }
+
+      async loadTemplateMangas() {
+        const templateMangas = [
+          {
+            id: this.generateId(),
+            userId: this.currentUser.id,
+            title: "Demon Slayer",
+            author: "Koyoharu Gotouge",
+            description: "Tanjiro Kamado luta para se tornar um caçador de demônios depois que sua família é massacrada.",
+            year: 2016,
+            rating: 4.8,
+            cover: "https://images.unsplash.com/photo-1639322537507-87d5c4477d1e?w=400&h=600&fit=crop",
+            chapters: []
+          },
+          {
+            id: this.generateId(),
+            userId: this.currentUser.id,
+            title: "Jujutsu Kaisen",
+            author: "Gege Akutami",
+            description: "Yuji Itadori é um estudante com habilidades físicas extraordinárias que entra no mundo das maldições.",
+            year: 2018,
+            rating: 4.7,
+            cover: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop",
+            chapters: []
+          }
+        ];
+
+        for (const manga of templateMangas) {
+          await this.db.saveManga(manga);
+          
+          // Adicionar capítulos de exemplo
+          const chapter1 = {
+            id: this.generateId(),
+            userId: this.currentUser.id,
+            mangaId: manga.id,
+            number: 1,
+            title: manga.title === "Demon Slayer" ? "Cruelty" : "Ryomen Sukuna",
+            pages: [
+              "https://placehold.co/800x1200/667eea/ffffff?text=" + manga.title + "+Cap+1+P1",
+              "https://placehold.co/800x1200/764ba2/ffffff?text=" + manga.title + "+Cap+1+P2",
+              "https://placehold.co/800x1200/8b5cf6/ffffff?text=" + manga.title + "+Cap+1+P3"
+            ]
+          };
+
+          await this.db.saveChapter(chapter1);
+          manga.chapters = [chapter1];
+        }
+
+        this.mangas = templateMangas;
+      }
+
+      setupEventListeners() {
+        // Mobile menu
+        document.getElementById('mobileMenu').addEventListener('click', () => {
+          document.getElementById('sidebar').classList.toggle('active');
+        });
+
+        // Navigation
+        document.querySelectorAll('.nav-item:not(#logoutBtn)').forEach(item => {
+          item.addEventListener('click', () => {
+            const section = item.dataset.section;
+            this.showSection(section);
+            document.getElementById('sidebar').classList.remove('active');
+          });
+        });
+
+        // Tornar-se Admin
+        document.getElementById('becomeAdminBtn').addEventListener('click', () => {
+          if (!this.isAdmin) {
+            this.showAdminCodeModal();
+          }
+        });
+
+        // Add Manga - Protected
+        document.getElementById('addMangaBtn').addEventListener('click', () => {
+          if (!this.isAdmin) {
+            this.showAdminLogin(() => {
+              document.getElementById('addMangaModal').classList.add('active');
+            });
+          } else {
+            document.getElementById('addMangaModal').classList.add('active');
+          }
+        });
+
+        // Add Chapter - Protected
+        document.getElementById('addChapterBtn').addEventListener('click', () => {
+          if (!this.isAdmin) {
+            this.showAdminLogin(() => {
+              document.getElementById('addChapterModal').classList.add('active');
+            });
+          } else {
+            document.getElementById('addChapterModal').classList.add('active');
+          }
+        });
+
+        // Outros event listeners
+        this.setupModalEventListeners();
+        this.setupReaderEventListeners();
+        this.setupSettingsEventListeners();
+      }
+
+      setupModalEventListeners() {
+        // Admin Code Modal
+        document.getElementById('closeAdminCodeBtn').addEventListener('click', () => {
+          document.getElementById('adminCodeModal').classList.remove('active');
+        });
+
+        document.getElementById('submitAdminCodeBtn').addEventListener('click', () => {
+          this.handleAdminCode();
+        });
+
+        // Admin Login
+        document.getElementById('closeAdminLoginBtn').addEventListener('click', () => {
+          document.getElementById('adminLoginModal').classList.remove('active');
+        });
+
+        document.getElementById('adminUnlockBtn').addEventListener('click', () => {
+          this.handleAdminUnlock();
+        });
+
+        // Add Manga
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+          document.getElementById('addMangaModal').classList.remove('active');
+        });
+
+        document.getElementById('saveMangaBtn').addEventListener('click', () => {
+          this.saveManga();
+        });
+
+        // Add Chapter
+        document.getElementById('closeChapterModalBtn').addEventListener('click', () => {
+          document.getElementById('addChapterModal').classList.remove('active');
+        });
+
+        document.getElementById('saveChapterBtn').addEventListener('click', () => {
+          this.saveChapter();
+        });
+
+        // Edit Manga
+        document.getElementById('closeEditMangaBtn').addEventListener('click', () => {
+          document.getElementById('editMangaModal').classList.remove('active');
+        });
+
+        document.getElementById('saveEditMangaBtn').addEventListener('click', () => {
+          this.saveMangaEdit();
+        });
+
+        document.getElementById('deleteMangaBtn').addEventListener('click', () => {
+          this.confirmDelete('manga', this.currentManga.id, `Excluir o mangá "${this.currentManga.title}"?`);
+        });
+
+        // Edit Chapter
+        document.getElementById('closeEditChapterModalBtn').addEventListener('click', () => {
+          document.getElementById('editChapterModal').classList.remove('active');
+        });
+
+        document.getElementById('saveEditChapterBtn').addEventListener('click', () => {
+          this.saveChapterEdit();
+        });
+
+        document.getElementById('deleteChapterBtn').addEventListener('click', () => {
+          this.confirmDelete('chapter', this.currentChapter.id, `Excluir o capítulo ${this.currentChapter.number}: "${this.currentChapter.title}"?`);
+        });
+
+        // Delete Confirmation
+        document.getElementById('closeDeleteConfirmBtn').addEventListener('click', () => {
+          document.getElementById('deleteConfirmModal').classList.remove('active');
+        });
+
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+          document.getElementById('deleteConfirmModal').classList.remove('active');
+        });
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+          this.executeDelete();
+        });
+
+        // Change Password
+        document.getElementById('closePasswordModalBtn').addEventListener('click', () => {
+          document.getElementById('changePasswordModal').classList.remove('active');
+        });
+
+        document.getElementById('savePasswordBtn').addEventListener('click', () => {
+          this.changePassword();
+        });
+      }
+
+      setupReaderEventListeners() {
+        // Reader
+        document.getElementById('closeReaderBtn').addEventListener('click', () => {
+          this.showSection('mangaDetail');
+        });
+
+        document.getElementById('prevPageBtn').addEventListener('click', () => {
+          this.prevPage();
+        });
+
+        document.getElementById('nextPageBtn').addEventListener('click', () => {
+          this.nextPage();
+        });
+
+        document.getElementById('prevChapterBtn').addEventListener('click', () => {
+          this.prevChapter();
+        });
+
+        document.getElementById('nextChapterBtn').addEventListener('click', () => {
+          this.nextChapter();
+        });
+
+        // Reading modes
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.readingMode = btn.dataset.mode;
+            this.applyReadingMode();
+          });
+        });
+
+        // Detail
+        document.getElementById('backBtn').addEventListener('click', () => {
+          this.showSection('library');
+        });
+
+        document.getElementById('startReadingBtn').addEventListener('click', () => {
+          this.startReading();
+        });
+
+        document.getElementById('favoriteBtn').addEventListener('click', () => {
+          this.toggleFavorite();
+        });
+
+        // Comments
+        document.getElementById('addCommentBtn').addEventListener('click', () => {
+          this.addComment();
+        });
+
+        // Comment filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.commentFilter = btn.dataset.filter;
+            this.loadComments();
+          });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          if (document.getElementById('reader').classList.contains('active')) {
+            if (e.key === 'ArrowLeft') this.prevPage();
+            if (e.key === 'ArrowRight') this.nextPage();
+          }
+        });
+      }
+
+      setupSettingsEventListeners() {
+        // Theme Toggle
+        document.getElementById('themeToggle').addEventListener('click', () => {
+          this.toggleTheme();
+        });
+
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+          this.toggleTheme();
+        });
+
+        // Settings buttons
+        document.getElementById('changePasswordBtn').addEventListener('click', () => {
+          document.getElementById('changePasswordModal').classList.add('active');
+        });
+
+        document.getElementById('resetStatsBtn').addEventListener('click', () => {
+          this.resetStats();
+        });
+
+        document.getElementById('clearLibraryBtn').addEventListener('click', () => {
+          this.clearLibrary();
+        });
+
+        document.getElementById('exportDataBtn').addEventListener('click', () => {
+          this.exportData();
+        });
+
+        document.getElementById('importDataBtn').addEventListener('click', () => {
+          this.importData();
+        });
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+          this.searchMangas(e.target.value);
+        });
+      }
+
+      showSection(section) {
+        document.querySelectorAll('.content-section').forEach(s => {
+          s.classList.remove('active');
+        });
+        document.getElementById(section).classList.add('active');
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.section === section) {
+            item.classList.add('active');
+          }
+        });
+
+        if (section === 'home') this.loadHome();
+        if (section === 'library') this.loadLibrary();
+        if (section === 'favorites') this.loadFavorites();
+        if (section === 'recent') this.loadRecent();
+        if (section === 'settings') this.loadSettings();
+      }
+
+      async loadHome() {
+        if (!this.currentUser) return;
+
+        const stats = await this.db.getStats(this.currentUser.id) || {
+          totalRead: 0,
+          hoursRead: 0,
+          level: 1
+        };
+
+        document.getElementById('totalMangas').textContent = this.mangas.length;
+        const totalChapters = this.mangas.reduce((sum, m) => sum + m.chapters.length, 0);
+        document.getElementById('totalChapters').textContent = totalChapters;
+        
+        // Update stats
+        document.getElementById('totalRead').textContent = stats.totalRead || 0;
+        document.getElementById('readingNow').textContent = this.mangas.filter(m => m.reading).length;
+        
+        const favorites = await this.db.getUserFavorites(this.currentUser.id);
+        document.getElementById('favoritesCount').textContent = favorites.length;
+        
+        document.getElementById('hoursRead').textContent = (stats.hoursRead || 0) + 'h';
+        document.getElementById('userLevel').textContent = stats.level || 1;
+
+        this.renderMangaGrid('featuredGrid', this.mangas.slice(0, 4));
+        this.renderMangaGrid('recentGrid', this.mangas);
+      }
+
+      async loadLibrary() {
+        this.renderMangaGrid('libraryGrid', this.mangas);
+      }
+
+      async loadFavorites() {
+        const favorites = await this.db.getUserFavorites(this.currentUser.id);
+        const favoriteMangas = this.mangas.filter(m => 
+          favorites.some(f => f.mangaId === m.id)
+        );
+        this.renderMangaGrid('favoritesGrid', favoriteMangas);
+      }
+
+      async loadRecent() {
+        const progress = await this.db.getUserAllProgress(this.currentUser.id);
+        const recentMangaIds = [...new Set(progress.map(p => {
+          // Encontrar o mangaId do capítulo
+          const chapter = this.mangas.flatMap(m => m.chapters).find(c => c.id === p.chapterId);
+          return chapter ? chapter.mangaId : null;
+        }).filter(Boolean))];
+        
+        const recentMangas = this.mangas.filter(m => recentMangaIds.includes(m.id));
+        this.renderMangaGrid('recentReadGrid', recentMangas.slice(0, 8));
+      }
+
+      async loadSettings() {
+        const toggle = document.getElementById('darkModeToggle');
+        if (this.theme === 'dark') {
+          toggle.classList.add('active');
+        } else {
+          toggle.classList.remove('active');
+        }
+
+        // Atualizar informações do usuário
+        document.getElementById('userName').textContent = this.currentUser.name;
+        document.getElementById('userRole').textContent = this.isAdmin ? 'Administrador' : 'Usuário';
+        document.getElementById('userAvatar').textContent = this.currentUser.name.charAt(0).toUpperCase();
+        document.getElementById('lastLogin').textContent = new Date(this.currentUser.lastLogin).toLocaleString('pt-BR');
+        document.getElementById('memberSince').textContent = new Date(this.currentUser.createdAt).toLocaleDateString('pt-BR');
+
+        // Mostrar/ocultar botão de se tornar admin
+        const adminBtn = document.getElementById('becomeAdminBtn');
+        if (this.isAdmin) {
+          adminBtn.style.display = 'none';
+        } else {
+          adminBtn.style.display = 'flex';
+        }
+      }
+
+      renderMangaGrid(containerId, mangas) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (mangas.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Nenhum mangá encontrado</p>';
+          return;
+        }
+
+        container.innerHTML = mangas.map(manga => {
+          return `
+          <div class="manga-card" onclick="app.openManga('${manga.id}')">
+            ${this.isAdmin ? '<span class="manga-admin-badge">ADMIN</span>' : ''}
+            ${manga.favorite ? '<span class="badge" style="position: absolute; top: 12px; right: 12px;"><i class="fas fa-star"></i></span>' : ''}
+            <img class="manga-cover" src="${manga.cover}" alt="${manga.title}" onerror="this.src='https://placehold.co/400x600/667eea/ffffff?text=Manga'">
+            <div class="manga-info">
+              <div class="manga-title">${manga.title}</div>
+              <div class="manga-meta">
+                <span>${manga.author}</span>
+                <span>•</span>
+                <span>${manga.year}</span>
+              </div>
+              <div class="manga-rating">
+                <i class="fas fa-star"></i>
+                <span>${manga.rating}</span>
+              </div>
+              ${this.isAdmin ? `
+                <div class="action-buttons" style="margin-top: 12px;">
+                  <button class="action-btn edit-btn" onclick="event.stopPropagation(); app.openEditMangaFromGrid('${manga.id}')">
+                    <i class="fas fa-edit"></i> Editar
+                  </button>
+                  <button class="action-btn delete-btn" onclick="event.stopPropagation(); app.confirmDelete('manga', '${manga.id}', 'Excluir o mangá \\'${manga.title}\\'?')">
+                    <i class="fas fa-trash"></i> Excluir
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        }).join('');
+      }
+
+      async openManga(id) {
+        this.currentManga = this.mangas.find(m => m.id === id);
+        if (!this.currentManga) return;
+
+        // Carregar capítulos se não estiverem carregados
+        if (!this.currentManga.chapters || this.currentManga.chapters.length === 0) {
+          this.currentManga.chapters = await this.db.getMangaChapters(id);
+          
+          // Carregar progresso para cada capítulo
+          for (const chapter of this.currentManga.chapters) {
+            const progress = await this.db.getUserProgress(this.currentUser.id, chapter.id);
+            chapter.read = !!progress;
+            chapter.comments = await this.db.getChapterComments(chapter.id);
+          }
+        }
+
+        document.getElementById('detailCover').src = this.currentManga.cover;
+        document.getElementById('detailTitle').textContent = this.currentManga.title;
+        document.getElementById('detailAuthor').textContent = this.currentManga.author;
+        document.getElementById('detailYear').textContent = this.currentManga.year;
+        document.getElementById('detailRating').textContent = this.currentManga.rating;
+        document.getElementById('detailDescription').textContent = this.currentManga.description;
+
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        const isFavorite = await this.db.isFavorite(this.currentUser.id, id);
+        favoriteBtn.innerHTML = isFavorite 
+          ? '<i class="fas fa-star"></i> Favoritado' 
+          : '<i class="far fa-star"></i> Favoritar';
+
+        this.loadChapters();
+        this.showSection('mangaDetail');
+      }
+
+      loadChapters() {
+        const container = document.getElementById('chaptersList');
+        container.innerHTML = this.currentManga.chapters.map(ch => {
+          return `
+          <div class="chapter-item" style="${ch.read ? 'opacity: 0.6;' : ''}">
+            <div>
+              <strong>Capítulo ${ch.number}</strong> ${ch.read ? '<span class="badge"><i class="fas fa-check"></i> Lido</span>' : ''}
+              <div style="color: var(--text-muted); font-size: 14px;">${ch.title}</div>
+              ${this.isAdmin ? `
+                <div class="action-buttons">
+                  <button class="action-btn edit-btn" onclick="app.openEditChapterModal('${ch.id}')">
+                    <i class="fas fa-edit"></i> Editar
+                  </button>
+                  <button class="action-btn delete-btn" onclick="app.confirmDelete('chapter', '${ch.id}', 'Excluir o capítulo ${ch.number}?')">
+                    <i class="fas fa-trash"></i> Excluir
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+            <button class="btn btn-primary" onclick="app.readChapter('${ch.id}')">
+              <i class="fas fa-${ch.read ? 'redo' : 'play'}"></i> ${ch.read ? 'Reler' : 'Ler'}
+            </button>
+          </div>
+        `;
+        }).join('');
+      }
+
+      async saveManga() {
+        const title = document.getElementById('mangaTitle').value.trim();
+        if (!title) {
+          this.showToast('Digite o título do mangá', 'error');
+          return;
+        }
+
+        const newManga = {
+          id: this.generateId(),
+          userId: this.currentUser.id,
+          title: title,
+          author: document.getElementById('mangaAuthor').value || 'Desconhecido',
+          description: document.getElementById('mangaDescription').value || '',
+          year: parseInt(document.getElementById('mangaYear').value) || 2024,
+          rating: 4.5,
+          cover: document.getElementById('mangaCover').value || `https://placehold.co/400x600/667eea/ffffff?text=${encodeURIComponent(title)}`,
+          chapters: []
+        };
+
+        await this.db.saveManga(newManga);
+        this.mangas.push(newManga);
+        
+        // Atualizar estatísticas
+        const stats = await this.db.getStats(this.currentUser.id) || {};
+        stats.mangasAdded = (stats.mangasAdded || 0) + 1;
+        stats.userId = this.currentUser.id;
+        await this.db.saveStats(stats);
+
+        document.getElementById('addMangaModal').classList.remove('active');
+        this.showToast('Mangá adicionado com sucesso!', 'success');
+        this.loadLibrary();
+      }
+
+      async saveChapter() {
+        if (!this.currentManga) return;
+
+        const number = parseInt(document.getElementById('chapterNumber').value);
+        const title = document.getElementById('chapterTitle').value;
+        const pagesText = document.getElementById('chapterPages').value;
+
+        if (!number || !pagesText) {
+          this.showToast('Preencha todos os campos', 'error');
+          return;
+        }
+
+        const pages = pagesText.split('\n').map(p => p.trim()).filter(p => p);
+
+        const newChapter = {
+          id: this.generateId(),
+          userId: this.currentUser.id,
+          mangaId: this.currentManga.id,
+          number: number,
+          title: title,
+          pages: pages
+        };
+
+        await this.db.saveChapter(newChapter);
+        this.currentManga.chapters.push(newChapter);
+        this.currentManga.chapters.sort((a, b) => a.number - b.number);
+        
+        document.getElementById('addChapterModal').classList.remove('active');
+        this.showToast('Capítulo adicionado!', 'success');
+        this.loadChapters();
+      }
+
+      async readChapter(chapterId) {
+        this.currentChapter = this.currentManga.chapters.find(ch => ch.id === chapterId);
+        if (!this.currentChapter) return;
+
+        // Initialize comments if not exists
+        if (!this.currentChapter.comments) {
+          this.currentChapter.comments = [];
+        }
+
+        this.currentPage = 1;
+        this.loadReader();
+        this.loadComments();
+        this.showSection('reader');
+
+        // Mark as read and update stats
+        if (!this.currentChapter.read) {
+          this.currentChapter.read = true;
+          
+          // Salvar progresso
+          await this.db.saveProgress({
+            userId: this.currentUser.id,
+            chapterId: chapterId,
+            mangaId: this.currentManga.id,
+            readAt: new Date().toISOString(),
+            page: 1
+          });
+
+          // Atualizar estatísticas
+          const stats = await this.db.getStats(this.currentUser.id) || {};
+          stats.totalRead = (stats.totalRead || 0) + 1;
+          stats.hoursRead = (stats.hoursRead || 0) + 0.5;
+          stats.chaptersRead = (stats.chaptersRead || 0) + 1;
+          stats.level = Math.floor((stats.chaptersRead || 0) / 10) + 1;
+          stats.userId = this.currentUser.id;
+          await this.db.saveStats(stats);
+
+          this.currentManga.reading = true;
+        }
+      }
+
+      async addComment() {
+        if (!this.currentChapter) return;
+
+        const text = document.getElementById('commentInput').value.trim();
+        if (!text) {
+          this.showToast('Digite um comentário!', 'error');
+          return;
+        }
+
+        const comment = {
+          id: this.generateId(),
+          userId: this.currentUser.id,
+          chapterId: this.currentChapter.id,
+          username: this.currentUser.name,
+          text: text,
+          date: new Date().toISOString(),
+          likes: 0,
+          isAdmin: this.isAdmin
+        };
+
+        await this.db.saveComment(comment);
+        this.currentChapter.comments.unshift(comment);
+        
+        document.getElementById('commentInput').value = '';
+        this.loadComments();
+        this.showToast('Comentário adicionado!', 'success');
+      }
+
+      async loadComments() {
+        if (!this.currentChapter) return;
+
+        const container = document.getElementById('commentsList');
+        let comments = [...this.currentChapter.comments];
+
+        // Apply filter
+        switch(this.commentFilter) {
+          case 'recent':
+            comments.sort((a, b) => new Date(b.date) - new Date(a.date));
+            break;
+          case 'popular':
+            comments.sort((a, b) => b.likes - a.likes);
+            break;
+          case 'oldest':
+            comments.sort((a, b) => new Date(a.date) - new Date(b.date));
+            break;
+        }
+
+        document.getElementById('commentCount').textContent = comments.length;
+
+        if (comments.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">Seja o primeiro a comentar!</p>';
+          return;
+        }
+
+        container.innerHTML = comments.map(comment => {
+          const date = new Date(comment.date);
+          const timeAgo = this.getTimeAgo(date);
+
+          return `
+            <div class="comment-item">
+              <div class="comment-header">
+                <div class="comment-user">
+                  <div class="comment-avatar">${comment.username.charAt(0).toUpperCase()}</div>
+                  <div class="comment-meta">
+                    <div class="comment-name">
+                      ${comment.username}
+                      ${comment.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
+                    </div>
+                    <div class="comment-date">${timeAgo}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="comment-text">${comment.text}</div>
+              <div class="comment-actions">
+                <button class="comment-action" onclick="app.likeComment('${comment.id}')">
+                  <i class="far fa-heart"></i>
+                  <span>${comment.likes}</span>
+                </button>
+                ${this.isAdmin ? `
+                  <button class="comment-action" onclick="app.deleteComment('${comment.id}')">
+                    <i class="fas fa-trash"></i>
+                    Deletar
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      async likeComment(commentId) {
+        const comment = this.currentChapter.comments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        comment.likes = (comment.likes || 0) + 1;
+        await this.db.saveComment(comment);
+        this.loadComments();
+      }
+
+      async deleteComment(commentId) {
+        if (!this.isAdmin) return;
+        
+        if (confirm('Deletar este comentário?')) {
+          await this.db.deleteComment(commentId);
+          const index = this.currentChapter.comments.findIndex(c => c.id === commentId);
+          if (index > -1) {
+            this.currentChapter.comments.splice(index, 1);
+          }
+          this.loadComments();
+          this.showToast('Comentário deletado!', 'success');
+        }
+      }
+
+      getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        if (seconds < 60) return 'agora';
+        if (seconds < 3600) return Math.floor(seconds / 60) + ' min atrás';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h atrás';
+        if (seconds < 2592000) return Math.floor(seconds / 86400) + 'd atrás';
+        return Math.floor(seconds / 2592000) + ' meses atrás';
+      }
+
+      loadReader() {
+        const container = document.getElementById('readerPages');
+        
+        // Validar se pages existe e tem URLs válidas
+        if (!this.currentChapter.pages || this.currentChapter.pages.length === 0) {
+          container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Nenhuma página disponível para este capítulo.</div>';
+          return;
+        }
+
+        container.innerHTML = this.currentChapter.pages.map((page, i) => {
+          const pageUrl = page.trim(); // Garantir que não tem espaços
+          return `
+            <div class="reader-page" id="page-${i + 1}">
+              <img src="${pageUrl}" alt="Página ${i + 1}" loading="lazy" style="max-width: 100%; height: auto;" onerror="this.src='https://placehold.co/800x1200/667eea/ffffff?text=Erro+Página+${i + 1}'; this.style.background='#222'; console.log('Erro ao carregar imagem: ${pageUrl}');">
+            </div>
+          `;
+        }).join('');
+
+        this.updatePageInfo();
+        this.applyReadingMode();
+      }
+
+      applyReadingMode() {
+        const container = document.getElementById('readerPages');
+        const pages = container.querySelectorAll('.reader-page');
+        
+        switch(this.readingMode) {
+          case 'single':
+            pages.forEach((page, i) => {
+              page.style.display = i === this.currentPage - 1 ? 'block' : 'none';
+            });
+            break;
+          case 'double':
+            pages.forEach((page, i) => {
+              const startPage = Math.floor((this.currentPage - 1) / 2) * 2;
+              page.style.display = (i === startPage || i === startPage + 1) ? 'inline-block' : 'none';
+              page.style.width = '48%';
+              page.style.marginRight = '2%';
+            });
+            break;
+          case 'scroll':
+            pages.forEach(page => {
+              page.style.display = 'block';
+            });
+            break;
+        }
+      }
+
+      updatePageInfo() {
+        const totalPages = this.currentChapter.pages.length;
+        document.getElementById('pageInfo').textContent = `Página ${this.currentPage} de ${totalPages}`;
+        
+        // Update progress bar
+        const progress = (this.currentPage / totalPages) * 100;
+        document.getElementById('readProgress').style.width = progress + '%';
+      }
+
+      nextPage() {
+        if (this.currentPage < this.currentChapter.pages.length) {
+          this.currentPage++;
+          if (this.readingMode !== 'scroll') {
+            this.applyReadingMode();
+          } else {
+            document.getElementById(`page-${this.currentPage}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          this.updatePageInfo();
+        } else {
+          this.showToast('Última página! Próximo capítulo?', 'info');
+        }
+      }
+
+      prevPage() {
+        if (this.currentPage > 1) {
+          this.currentPage--;
+          if (this.readingMode !== 'scroll') {
+            this.applyReadingMode();
+          } else {
+            document.getElementById(`page-${this.currentPage}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          this.updatePageInfo();
+        }
+      }
+
+      nextChapter() {
+        const currentIndex = this.currentManga.chapters.findIndex(ch => ch.id === this.currentChapter.id);
+        if (currentIndex < this.currentManga.chapters.length - 1) {
+          this.readChapter(this.currentManga.chapters[currentIndex + 1].id);
+        } else {
+          this.showToast('Último capítulo!', 'warning');
+        }
+      }
+
+      prevChapter() {
+        const currentIndex = this.currentManga.chapters.findIndex(ch => ch.id === this.currentChapter.id);
+        if (currentIndex > 0) {
+          this.readChapter(this.currentManga.chapters[currentIndex - 1].id);
+        } else {
+          this.showToast('Primeiro capítulo!', 'warning');
+        }
+      }
+
+      startReading() {
+        if (this.currentManga.chapters.length > 0) {
+          this.readChapter(this.currentManga.chapters[0].id);
+        } else {
+          this.showToast('Nenhum capítulo disponível', 'warning');
+        }
+      }
+
+      async toggleFavorite() {
+        if (!this.currentManga) return;
+        
+        const isFavorite = await this.db.isFavorite(this.currentUser.id, this.currentManga.id);
+        
+        if (isFavorite) {
+          await this.db.deleteFavorite(this.currentUser.id, this.currentManga.id);
+          this.currentManga.favorite = false;
+          this.showToast('Removido dos favoritos', 'success');
+        } else {
+          await this.db.saveFavorite({
+            userId: this.currentUser.id,
+            mangaId: this.currentManga.id,
+            addedAt: new Date().toISOString()
+          });
+          this.currentManga.favorite = true;
+          this.showToast('Adicionado aos favoritos!', 'success');
+        }
+        
+        const btn = document.getElementById('favoriteBtn');
+        btn.innerHTML = this.currentManga.favorite 
+          ? '<i class="fas fa-star"></i> Favoritado' 
+          : '<i class="far fa-star"></i> Favoritar';
+        
+        // Atualizar estatísticas
+        const stats = await this.db.getStats(this.currentUser.id) || {};
+        stats.favorites = await this.db.getUserFavorites(this.currentUser.id).then(f => f.length);
+        stats.userId = this.currentUser.id;
+        await this.db.saveStats(stats);
+      }
+
+      async toggleTheme() {
+        this.theme = this.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', this.theme);
+        const icon = document.querySelector('#themeToggle i');
+        icon.className = this.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        
+        // Update settings toggle
+        const toggle = document.getElementById('darkModeToggle');
+        if (this.theme === 'dark') {
+          toggle.classList.add('active');
+        } else {
+          toggle.classList.remove('active');
+        }
+        
+        // Salvar configurações
+        const settings = await this.db.getSettings(this.currentUser.id) || {};
+        settings.theme = this.theme;
+        settings.userId = this.currentUser.id;
+        await this.db.saveSettings(settings);
+        
+        this.showToast(`Tema ${this.theme === 'dark' ? 'escuro' : 'claro'} ativado!`, 'success');
+      }
+
+      searchMangas(query) {
+        if (!query) {
+          this.loadHome();
+          return;
+        }
+
+        const results = this.mangas.filter(m => 
+          m.title.toLowerCase().includes(query.toLowerCase()) ||
+          m.author.toLowerCase().includes(query.toLowerCase())
+        );
+
+        this.renderMangaGrid('featuredGrid', results);
+        document.getElementById('recentGrid').innerHTML = '';
+      }
+
+      showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 3000);
+      }
+
+      updateUI() {
+        const icon = document.querySelector('#themeToggle i');
+        icon.className = this.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        
+        // Atualizar informações do usuário
+        document.getElementById('userName').textContent = this.currentUser.name;
+        document.getElementById('userRole').textContent = this.isAdmin ? 'Administrador' : 'Usuário';
+        document.getElementById('userAvatar').textContent = this.currentUser.name.charAt(0).toUpperCase();
+
+        // Mostrar/ocultar botão de se tornar admin
+        const adminBtn = document.getElementById('becomeAdminBtn');
+        if (this.isAdmin) {
+          adminBtn.style.display = 'none';
+        } else {
+          adminBtn.style.display = 'flex';
+        }
+        
+        this.loadHome();
+      }
+
+      // Admin functions
+      showAdminCodeModal() {
+        const modal = document.getElementById('adminCodeModal');
+        const codeInput = document.getElementById('adminCodeInput');
+        const submitBtn = document.getElementById('submitAdminCodeBtn');
+        const errorMsg = document.getElementById('adminCodeError');
+
+        modal.classList.add('active');
+        codeInput.value = '';
+        codeInput.focus();
+        errorMsg.style.display = 'none';
+
+        const submitCode = () => {
+          const enteredCode = codeInput.value;
+          if (enteredCode === '123456789') {
+            this.makeUserAdmin();
+            modal.classList.remove('active');
+          } else {
+            errorMsg.style.display = 'block';
+            codeInput.value = '';
+            codeInput.style.borderColor = 'var(--danger)';
+            setTimeout(() => {
+              errorMsg.style.display = 'none';
+              codeInput.style.borderColor = 'var(--border-color)';
+            }, 2000);
+          }
+        };
+
+        submitBtn.onclick = submitCode;
+        codeInput.onkeypress = (e) => {
+          if (e.key === 'Enter') submitCode();
+        };
+      }
+
+      async makeUserAdmin() {
+        this.currentUser.role = 'admin';
+        this.isAdmin = true;
+        await this.db.saveUser(this.currentUser);
+        this.showToast('Agora você é um administrador!', 'success');
+        this.updateUI();
+        this.loadSettings();
+      }
+
+      showAdminLogin(callback) {
+        const modal = document.getElementById('adminLoginModal');
+        const passwordInput = document.getElementById('adminPasswordInput');
+        const unlockBtn = document.getElementById('adminUnlockBtn');
+        const errorMsg = document.getElementById('adminError');
+
+        modal.classList.add('active');
+        passwordInput.value = '';
+        passwordInput.focus();
+
+        const unlock = () => {
+          const enteredPassword = passwordInput.value;
+          if (enteredPassword === this.currentUser.adminPassword) {
+            modal.classList.remove('active');
+            if (callback) callback();
+          } else {
+            errorMsg.style.display = 'block';
+            passwordInput.value = '';
+            passwordInput.style.borderColor = 'var(--danger)';
+            setTimeout(() => {
+              errorMsg.style.display = 'none';
+              passwordInput.style.borderColor = 'var(--border-color)';
+            }, 2000);
+          }
+        };
+
+        unlockBtn.onclick = unlock;
+        passwordInput.onkeypress = (e) => {
+          if (e.key === 'Enter') unlock();
+        };
+      }
+
+      async handleAdminUnlock() {
+        const passwordInput = document.getElementById('adminPasswordInput');
+        const enteredPassword = passwordInput.value;
+        
+        if (enteredPassword === this.currentUser.adminPassword) {
+          document.getElementById('adminLoginModal').classList.remove('active');
+        } else {
+          document.getElementById('adminError').style.display = 'block';
+          passwordInput.value = '';
+          passwordInput.style.borderColor = 'var(--danger)';
+          setTimeout(() => {
+            document.getElementById('adminError').style.display = 'none';
+            passwordInput.style.borderColor = 'var(--border-color)';
+          }, 2000);
+        }
+      }
+
+      async changePassword() {
+        const current = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+
+        if (current !== this.currentUser.adminPassword) {
+          this.showToast('Senha atual incorreta!', 'error');
+          return;
+        }
+
+        if (newPass.length !== 4) {
+          this.showToast('A senha deve ter 4 dígitos!', 'error');
+          return;
+        }
+
+        if (newPass !== confirm) {
+          this.showToast('As senhas não coincidem!', 'error');
+          return;
+        }
+
+        this.currentUser.adminPassword = newPass;
+        await this.db.saveUser(this.currentUser);
+        
+        document.getElementById('changePasswordModal').classList.remove('active');
+        this.showToast('Senha de admin alterada!', 'success');
+        
+        // Clear inputs
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      }
+
+      // Edit functions
+      openEditMangaModal() {
+        if (!this.currentManga) return;
+        
+        if (!this.isAdmin) {
+          this.showAdminLogin(() => {
+            this.openEditMangaModal();
+          });
+          return;
+        }
+
+        document.getElementById('editMangaTitle').value = this.currentManga.title;
+        document.getElementById('editMangaAuthor').value = this.currentManga.author;
+        document.getElementById('editMangaDescription').value = this.currentManga.description;
+        document.getElementById('editMangaYear').value = this.currentManga.year;
+        document.getElementById('editMangaCover').value = this.currentManga.cover;
+        
+        document.getElementById('editMangaModal').classList.add('active');
+      }
+
+      async saveMangaEdit() {
+        if (!this.currentManga) return;
+
+        const title = document.getElementById('editMangaTitle').value.trim();
+        if (!title) {
+          this.showToast('Digite o título do mangá', 'error');
+          return;
+        }
+
+        this.currentManga.title = title;
+        this.currentManga.author = document.getElementById('editMangaAuthor').value || 'Desconhecido';
+        this.currentManga.description = document.getElementById('editMangaDescription').value || '';
+        this.currentManga.year = parseInt(document.getElementById('editMangaYear').value) || 2024;
+        this.currentManga.cover = document.getElementById('editMangaCover').value || 
+          `https://placehold.co/400x600/667eea/ffffff?text=${encodeURIComponent(title)}`;
+
+        await this.db.saveManga(this.currentManga);
+        document.getElementById('editMangaModal').classList.remove('active');
+        this.showToast('Mangá atualizado com sucesso!', 'success');
+        this.openManga(this.currentManga.id);
+      }
+
+      async openEditChapterModal(chapterId) {
+        if (!this.currentManga) return;
+        
+        if (!this.isAdmin) {
+          this.showAdminLogin(() => {
+            this.openEditChapterModal(chapterId);
+          });
+          return;
+        }
+
+        const chapter = this.currentManga.chapters.find(ch => ch.id === chapterId);
+        if (!chapter) return;
+
+        this.currentChapter = chapter;
+
+        document.getElementById('editChapterNumber').value = chapter.number;
+        document.getElementById('editChapterTitle').value = chapter.title;
+        document.getElementById('editChapterPages').value = chapter.pages.join('\n');
+        
+        document.getElementById('editChapterModal').classList.add('active');
+      }
+
+      async saveChapterEdit() {
+        if (!this.currentManga || !this.currentChapter) return;
+
+        const oldNumber = this.currentChapter.number;
+        const newNumber = parseInt(document.getElementById('editChapterNumber').value);
+        const title = document.getElementById('editChapterTitle').value;
+        const pagesText = document.getElementById('editChapterPages').value;
+
+        if (!newNumber || !pagesText) {
+          this.showToast('Preencha todos os campos', 'error');
+          return;
+        }
+
+        const pages = pagesText.split('\n').map(p => p.trim()).filter(p => p);
+        
+        // Atualizar capítulo
+        this.currentChapter.number = newNumber;
+        this.currentChapter.title = title;
+        this.currentChapter.pages = pages;
+        
+        await this.db.saveChapter(this.currentChapter);
+        
+        // Reordenar capítulos
+        this.currentManga.chapters.sort((a, b) => a.number - b.number);
+        
+        document.getElementById('editChapterModal').classList.remove('active');
+        this.showToast('Capítulo atualizado!', 'success');
+        this.loadChapters();
+      }
+
+      // Delete functions
+      confirmDelete(type, id, message) {
+        if (!this.isAdmin) {
+          this.showAdminLogin(() => {
+            this.confirmDelete(type, id, message);
+          });
+          return;
+        }
+
+        this.pendingDelete.type = type;
+        this.pendingDelete.id = id;
+
+        document.getElementById('deleteConfirmMessage').textContent = message;
+        document.getElementById('deleteConfirmModal').classList.add('active');
+      }
+
+      async executeDelete() {
+        switch (this.pendingDelete.type) {
+          case 'manga':
+            await this.deleteManga(this.pendingDelete.id);
+            break;
+          case 'chapter':
+            await this.deleteChapter(this.pendingDelete.id);
+            break;
+          case 'comment':
+            await this.deleteComment(this.pendingDelete.id);
+            break;
+        }
+        
+        document.getElementById('deleteConfirmModal').classList.remove('active');
+        this.pendingDelete = { type: null, id: null };
+      }
+
+      async deleteManga(mangaId) {
+        const index = this.mangas.findIndex(m => m.id === mangaId);
+        if (index !== -1) {
+          // Deletar capítulos relacionados
+          const chapters = await this.db.getMangaChapters(mangaId);
+          for (const chapter of chapters) {
+            await this.db.deleteChapter(chapter.id);
+          }
+          
+          // Deletar favoritos relacionados
+          await this.db.deleteFavorite(this.currentUser.id, mangaId);
+          
+          // Deletar mangá
+          await this.db.deleteManga(mangaId);
+          this.mangas.splice(index, 1);
+          
+          this.showToast('Mangá excluído!', 'success');
+          this.showSection('library');
+        }
+      }
+
+      async deleteChapter(chapterId) {
+        if (!this.currentManga) return;
+        
+        const index = this.currentManga.chapters.findIndex(ch => ch.id === chapterId);
+        if (index !== -1) {
+          await this.db.deleteChapter(chapterId);
+          this.currentManga.chapters.splice(index, 1);
+          this.showToast('Capítulo excluído!', 'success');
+          this.loadChapters();
+        }
+      }
+
+      openEditMangaFromGrid(mangaId) {
+        const manga = this.mangas.find(m => m.id === mangaId);
+        if (!manga) return;
+        
+        this.currentManga = manga;
+        this.openEditMangaModal();
+      }
+
+      // Settings functions
+      async resetStats() {
+        if (confirm('Tem certeza que deseja resetar todas as estatísticas?')) {
+          const stats = {
+            userId: this.currentUser.id,
+            totalRead: 0,
+            hoursRead: 0,
+            level: 1,
+            mangasAdded: this.mangas.length,
+            chaptersRead: 0,
+            favorites: 0
+          };
+          
+          await this.db.saveStats(stats);
+          this.showToast('Estatísticas resetadas!', 'success');
+          this.loadHome();
+        }
+      }
+
+      async clearLibrary() {
+        if (confirm('⚠️ ATENÇÃO: Isso vai remover TODOS os mangás! Tem certeza?')) {
+          if (confirm('Última chance! Confirma mesmo?')) {
+            await this.db.clearUserData(this.currentUser.id);
+            this.mangas = [];
+            await this.loadTemplateMangas();
+            this.showToast('Biblioteca limpa!', 'success');
+            this.loadHome();
+          }
+        }
+      }
+
+      async exportData() {
+        try {
+          const data = await this.db.exportUserData(this.currentUser.id);
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `mangaverse-backup-${new Date().toISOString().split('T')[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          this.showToast('Backup exportado com sucesso!', 'success');
+        } catch (error) {
+          this.showToast('Erro ao exportar dados: ' + error.message, 'error');
+        }
+      }
+
+      async importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            if (confirm('Importar dados? Isso substituirá seus dados atuais.')) {
+              await this.db.importUserData(this.currentUser.id, data);
+              await this.loadUserData();
+              this.showToast('Dados importados com sucesso!', 'success');
+              this.loadHome();
+            }
+          } catch (error) {
+            this.showToast('Erro ao importar dados: ' + error.message, 'error');
+          }
+        };
+        
+        input.click();
+      }
+
+      generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+      }
+    }
+
+    // ===== FIREBASE CONFIGURATION =====
+    // 🔴 TODO: Substitua com suas credenciais do Firebase
+    // Siga o guia em FIREBASE_SETUP.md
+    const firebaseConfig = {
+      apiKey: "AIzaSyDemoKey123456789",
+      authDomain: "seu-projeto.firebaseapp.com",
+      databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
+      projectId: "seu-projeto",
+      storageBucket: "seu-projeto.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abc123def456"
+    };
+
+    let firebaseDB = null;
+    try {
+      if (typeof firebase !== 'undefined' && firebase) {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        firebaseDB = firebase.database();
+        console.log('✅ Firebase inicializado! Usando banco COMPARTILHADO');
+      }
+    } catch (error) {
+      console.log('⚠️ Firebase não configurado. Usando banco LOCAL (IndexedDB)');
+      firebaseDB = null;
+    }
+
+    // Inicializar aplicação
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        window.app = new MangaVerse();
+        await app.init();
+      } catch (err) {
+        console.error('Falha ao iniciar a aplicação:', err);
+        const toast = document.getElementById('toastContainer');
+        if (toast) toast.textContent = 'Erro ao iniciar a aplicação. Veja console.';
+      }
+    });
+  </script>
+</body>
+</html>
