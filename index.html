@@ -11,8 +11,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+  <!-- Firebase v8 (COMPATÍVEL com sites normais) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   
   <style>
     * {
@@ -3722,13 +3724,13 @@ https://exemplo.com/pagina2.jpg"></textarea>
     // 🔴 TODO: Substitua com suas credenciais do Firebase
     // Siga o guia em FIREBASE_SETUP.md
     const firebaseConfig = {
-      apiKey: "AIzaSyDemoKey123456789",
-      authDomain: "seu-projeto.firebaseapp.com",
-      databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
-      projectId: "seu-projeto",
-      storageBucket: "seu-projeto.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abc123def456"
+      apiKey: "AIzaSyDxG1zdDbmF21Z3HBsD2Bes1uSHKvnEHWY",
+      authDomain: "mangaserver-3a572.firebaseapp.com",
+      databaseURL: "https://mangaserver-3a572-default-rtdb.firebaseio.com",
+      projectId: "mangaserver-3a572",
+      storageBucket: "mangaserver-3a572.appspot.com",
+      messagingSenderId: "508265309386",
+      appId: "1:508265309386:web:a3b308c62f37fafa020033"
     };
 
     let firebaseDB = null;
