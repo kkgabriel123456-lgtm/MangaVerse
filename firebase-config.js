@@ -1,45 +1,59 @@
 // ===== FIREBASE CONFIGURATION =====
-// 🔴 IMPORTANTE: Substitua com suas credenciais do Firebase!
-// Siga o guia em FIREBASE_SETUP.md
+// Projeto: mangaserver-3a572
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDemoKey123456789", // TODO: Substitua
-  authDomain: "seu-projeto.firebaseapp.com", // TODO: Substitua
-  databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com", // TODO: Substitua
-  projectId: "seu-projeto", // TODO: Substitua
-  storageBucket: "seu-projeto.appspot.com", // TODO: Substitua
-  messagingSenderId: "123456789", // TODO: Substitua
-  appId: "1:123456789:web:abc123def456" // TODO: Substitua
+  apiKey: "AIzaSyDxG1zdDbmF21Z3HBsD2Bes1uSHKvnEHWY",
+  authDomain: "mangaserver-3a572.firebaseapp.com",
+  databaseURL: "https://mangaserver-3a572-default-rtdb.firebaseio.com",
+  projectId: "mangaserver-3a572",
+  storageBucket: "mangaserver-3a572.appspot.com",
+  messagingSenderId: "508265309386",
+  appId: "1:508265309386:web:a3b308c62f37fafa020033"
 };
-
-// Inicializar Firebase quando disponível
+// ===== VARIÁVEIS GLOBAIS =====
 let firebaseDB = null;
+let firebaseAuth = null;
 let useFirebase = false;
 
+// ===== INICIALIZAR FIREBASE =====
 function initializeFirebase() {
   try {
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-      firebaseDB = firebase.database();
-      useFirebase = true;
-      console.log('✅ Firebase inicializado com sucesso!');
-      console.log('📱 Usando banco de dados COMPARTILHADO');
-      return true;
-    } else if (firebase && firebase.apps.length) {
-      firebaseDB = firebase.database();
-      useFirebase = true;
-      console.log('✅ Firebase já estava inicializado');
-      return true;
+    if (typeof firebase === "undefined") {
+      throw new Error("Firebase SDK não carregado");
     }
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    firebaseDB = firebase.database();
+    firebaseAuth = firebase.auth();
+    useFirebase = true;
+
+    console.log("✅ Firebase inicializado com sucesso");
+    console.log("📡 Realtime Database conectado");
+
+    // Login automático ANÔNIMO (necessário para comentários)
+    firebaseAuth.signInAnonymously()
+      .then(() => {
+        console.log("👤 Usuário anônimo autenticado");
+      })
+      .catch(err => {
+        console.error("❌ Erro no auth:", err);
+      });
+
+    return true;
+
   } catch (error) {
-    console.warn('⚠️ Firebase não configurado. Usando banco de dados LOCAL (IndexedDB)');
-    console.warn('Para usar banco compartilhado, siga: FIREBASE_SETUP.md');
+    console.warn("⚠️ Firebase indisponível");
+    console.warn("➡️ Usando modo LOCAL (sem banco compartilhado)");
+    console.error(error);
     useFirebase = false;
+    return false;
   }
-  return false;
 }
 
-// Chamar quando DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(initializeFirebase, 100);
+// ===== INICIAR QUANDO A PÁGINA CARREGAR =====
+document.addEventListener("DOMContentLoaded", () => {
+  initializeFirebase();
 });
