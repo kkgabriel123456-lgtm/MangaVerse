@@ -1170,6 +1170,18 @@
           </div>
         </div>
 
+        <!-- Admin Login (quick) -->
+        <div id="adminLogin" style="padding:10px; margin-top:12px;">
+          <input type="email" id="adminEmail" placeholder="Email admin" style="width:100%; margin-bottom:6px; padding:6px; border-radius:6px; border:1px solid var(--border-color);">
+          <input type="password" id="adminPassword" placeholder="Senha" style="width:100%; margin-bottom:6px; padding:6px; border-radius:6px; border:1px solid var(--border-color);">
+          <div style="display:flex; gap:8px;">
+            <button class="btn" onclick="loginAdmin()" style="flex:1; padding:8px;">Entrar</button>
+            <button class="btn" onclick="createAdminAccount()" style="flex:1; padding:8px;">Criar conta</button>
+            <button class="btn" onclick="logoutAdmin()" style="flex:1; padding:8px;">Logout</button>
+          </div>
+          <p id="adminStatus" style="margin-top:6px; font-size:13px; color:var(--text-secondary);"></p>
+        </div>
+
         <nav>
           <div class="nav-item active" data-section="home">
             <i class="fas fa-home"></i>
@@ -3741,6 +3753,31 @@ https://exemplo.com/pagina2.jpg"></textarea>
         }
         firebaseDB = firebase.database();
         console.log('✅ Firebase inicializado! Usando banco COMPARTILHADO');
+        // Atualiza estado de autenticação e role
+        if (firebase && firebase.auth) {
+          firebase.auth().onAuthStateChanged(async (user) => {
+            const nameEl = document.getElementById('userName');
+            const roleEl = document.getElementById('userRole');
+            const statusEl = document.getElementById('adminStatus');
+            if (user) {
+              nameEl && (nameEl.textContent = user.email || user.uid);
+              try {
+                const snap = await firebase.database().ref('admins/' + user.uid).once('value');
+                const isAdmin = snap.exists() && snap.val() === true;
+                window.isAdmin = !!isAdmin;
+                roleEl && (roleEl.textContent = isAdmin ? 'Admin' : 'Usuário');
+                statusEl && (statusEl.textContent = isAdmin ? '✅ Admin autenticado' : '❌ Não é admin');
+              } catch (e) {
+                console.error('Erro ao verificar admin:', e);
+              }
+            } else {
+              window.isAdmin = false;
+              nameEl && (nameEl.textContent = 'Usuário');
+              roleEl && (roleEl.textContent = 'Usuário');
+              statusEl && (statusEl.textContent = 'Não autenticado');
+            }
+          });
+        }
       }
     } catch (error) {
       console.log('⚠️ Firebase não configurado. Usando banco LOCAL (IndexedDB)');
@@ -3749,6 +3786,101 @@ https://exemplo.com/pagina2.jpg"></textarea>
 
     // Inicializar aplicação
     document.addEventListener('DOMContentLoaded', async () => {
+      // Funções de login admin (rápidas)
+      window.loginAdmin = function() {
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        const statusEl = document.getElementById('adminStatus');
+        if (!email || !password) {
+          if (statusEl) statusEl.textContent = 'Preencha email e senha';
+          return;
+        }
+        firebase.auth().signInWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            const uid = userCredential.user.uid;
+            console.log('✅ Logado com UID:', uid);
+            return firebase.database().ref('admins/' + uid).once('value');
+          })
+          .then(snapshot => {
+            const statusEl2 = document.getElementById('adminStatus');
+            if (snapshot.exists() && snapshot.val() === true) {
+              if (statusEl2) statusEl2.textContent = '✅ Admin logado';
+              window.isAdmin = true;
+            } else {
+              if (statusEl2) statusEl2.textContent = '❌ Você não é admin';
+              firebase.auth().signOut();
+              window.isAdmin = false;
+            }
+          })
+          .catch(error => {
+            console.error(error);
+            const statusEl3 = document.getElementById('adminStatus');
+            let msg = 'Erro ao autenticar';
+            switch (error.code) {
+              case 'auth/invalid-email':
+                msg = 'Email inválido.';
+                break;
+              case 'auth/user-not-found':
+                msg = 'Conta não encontrada. Você pode criar uma nova conta.';
+                break;
+              case 'auth/wrong-password':
+                msg = 'Senha incorreta.';
+                break;
+              case 'auth/too-many-requests':
+                msg = 'Muitas tentativas. Tente novamente mais tarde.';
+                break;
+              default:
+                msg = error.message || msg;
+            }
+            if (statusEl3) statusEl3.textContent = msg;
+          });
+      };
+
+      // Criar conta admin (cliente) - mostra UID para adicionar em /admins via Console
+      window.createAdminAccount = function() {
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        const statusEl = document.getElementById('adminStatus');
+        if (!email || !password) {
+          if (statusEl) statusEl.textContent = 'Preencha email e senha para criar conta';
+          return;
+        }
+        firebase.auth().createUserWithEmailAndPassword(email, password)
+          .then(userCredential => {
+            const uid = userCredential.user.uid;
+            console.log('✅ Conta criada UID:', uid);
+            if (statusEl) statusEl.textContent = 'Conta criada. Copie seu UID: ' + uid + '. Adicione em /admins no Console.';
+            // Sign out to avoid accidental restricted writes until admin is added
+            return firebase.auth().signOut();
+          })
+          .catch(error => {
+            console.error(error);
+            let msg = 'Erro ao criar conta';
+            switch (error.code) {
+              case 'auth/email-already-in-use':
+                msg = 'Este email já está em uso.';
+                break;
+              case 'auth/invalid-email':
+                msg = 'Email inválido.';
+                break;
+              case 'auth/weak-password':
+                msg = 'Senha fraca. Use pelo menos 6 caracteres.';
+                break;
+              default:
+                msg = error.message || msg;
+            }
+            if (statusEl) statusEl.textContent = msg;
+          });
+      };
+
+      window.logoutAdmin = function() {
+        firebase.auth().signOut().then(() => {
+          window.isAdmin = false;
+          const statusEl = document.getElementById('adminStatus');
+          if (statusEl) statusEl.textContent = 'Desconectado';
+        });
+      };
+
       try {
         window.app = new MangaVerse();
         await app.init();
